@@ -123,5 +123,16 @@
     "source": "",
     "date": "2026-03-28T12:12:51.959Z",
     "synced": true
+  },
+  {
+    "id": "mnafzfgc99ga",
+    "type": "fact",
+    "content": "Tester with image\n\n![image](images/mnafzsew_Screenshot_2026-03-16_at_21.17.27.png)",
+    "title": "Image tester",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T14:45:31.401Z",
+    "synced": false
   }
 ]

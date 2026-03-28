@@ -62,8 +62,9 @@ a { color: inherit; }
 .type-opt:hover { color: var(--text); border-color: var(--text3); }
 .type-opt.active { border-width: 1.5px; }
 .form-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rl); padding: 1rem 1.1rem; cursor: pointer; transition: border-color 0.12s; }
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rl); padding: 1rem 1.1rem; cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; }
 .card:hover { border-color: var(--border2); }
+.card.drop-over { border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,0.25); }
 .card-top { display: flex; align-items: center; gap: 8px; }
 .type-badge { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
 .card-title-text { font-size: 13px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -82,6 +83,7 @@ a { color: inherit; }
 .card-content a { color: var(--tc, var(--text2)); text-decoration: underline; }
 .card-content blockquote { border-left: 2px solid var(--border2); padding-left: 10px; color: var(--text2); margin: 0.5em 0; }
 .card-content h1, .card-content h2, .card-content h3 { font-size: 13px; font-weight: 600; margin: 0.5em 0 0.3em; }
+.card-content img { max-width: 100%; height: auto; border-radius: var(--r); margin: 0.5em 0; }
 .card-meta { margin-top: 7px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .tag { font-family: var(--mono); font-size: 10px; color: var(--text2); background: var(--bg2); padding: 2px 7px; border-radius: 3px; cursor: pointer; } /* alt bg: #F0EEE6 */
 .tag:hover { background: var(--bg3); }
@@ -129,15 +131,15 @@ a { color: inherit; }
     </div>
     <div class="sb-bottom">
       <div class="file-status" id="file-status">No file connected</div>
-      <button class="btn btn-sm btn-wide" id="btn-connect" onclick="connectFile()">Connect JSON file</button>
+      <button class="btn btn-sm btn-wide" id="btn-connect" onclick="connectFolder()">Connect folder</button>
     </div>
   </div>
   <div class="main" id="main-area">
     <div class="connect-screen" id="connect-screen">
-      <h2>Connect your knowledge base file</h2>
-      <p>Choose an existing <code>knowledge-base.json</code> or create a new one. The file stays on your disk and syncs automatically when you switch back to this window.</p>
-      <button class="btn btn-primary" onclick="connectFile()">Choose or create file</button>
-      <p style="font-size:12px;color:var(--text3);margin-top:0.5rem">Works in Chrome and Edge.</p>
+      <h2>Connect your knowledge base folder</h2>
+      <p>Select the folder containing <code>knowledge-base.json</code> (or an empty folder to start fresh). The app reads and writes directly to files on disk.</p>
+      <button class="btn btn-primary" onclick="connectFolder()">Choose folder</button>
+      <p style="font-size:12px;color:var(--text3);margin-top:0.5rem">Works in Chrome and Edge. You can drag images onto cards.</p>
     </div>
     <div id="app-area" style="display:none">
       <div class="page-header">
@@ -235,7 +237,35 @@ async function idbGet(key){
 }
 
 // --- File System Access ---
-async function connectFile() {
+let dirHandle = null;
+const JSON_NAME = 'knowledge-base.json';
+
+async function connectFolder() {
+  try {
+    const dh = await window.showDirectoryPicker({mode:'readwrite'});
+    dirHandle = dh;
+    await idbPut('dh', dirHandle);
+    // Find or create the JSON file inside the folder
+    try {
+      fileHandle = await dirHandle.getFileHandle(JSON_NAME);
+    } catch {
+      // No JSON file yet — let user pick a name or create default
+      fileHandle = await dirHandle.getFileHandle(JSON_NAME, {create: true});
+      items = [];
+      const wr = await fileHandle.createWritable();
+      await wr.write('[]');
+      await wr.close();
+    }
+    await idbPut('fh', fileHandle);
+    await loadFromFile();
+    showApp();
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Could not open folder: ' + e.message);
+  }
+}
+
+// Switch to a different JSON file within the same folder
+async function switchFile() {
   try {
     const [fh] = await window.showOpenFilePicker({
       types:[{description:'JSON',accept:{'application/json':['.json']}}],
@@ -244,33 +274,14 @@ async function connectFile() {
     fileHandle = fh;
     await idbPut('fh', fileHandle);
     await loadFromFile();
-    showApp();
   } catch(e) {
-    if (e.name !== 'AbortError') {
-      try {
-        const fh2 = await window.showSaveFilePicker({
-          suggestedName:'knowledge-base.json',
-          types:[{description:'JSON',accept:{'application/json':['.json']}}]
-        });
-        fileHandle = fh2;
-        await idbPut('fh', fileHandle);
-        items = [];
-        await saveToFile();
-        showApp();
-      } catch(e2) { if(e2.name!=='AbortError') showToast('Could not open file: '+e2.message); }
-    }
+    if (e.name !== 'AbortError') showToast('Could not open file: ' + e.message);
   }
 }
 
 async function loadFromFile() {
   if (!fileHandle) return;
   try {
-    // Only request read permission to load; readwrite requested on first save
-    let perm = await fileHandle.queryPermission({mode:'read'});
-    if (perm !== 'granted') {
-      perm = await fileHandle.requestPermission({mode:'read'});
-      if (perm !== 'granted') return;
-    }
     const file = await fileHandle.getFile();
     const text = await file.text();
     if (text.trim()) {
@@ -288,12 +299,6 @@ async function loadFromFile() {
 async function saveToFile() {
   if (!fileHandle) return;
   try {
-    // Escalate to readwrite on first save
-    const perm = await fileHandle.queryPermission({mode:'readwrite'});
-    if (perm !== 'granted') {
-      const req = await fileHandle.requestPermission({mode:'readwrite'});
-      if (req !== 'granted') { showToast('Write permission denied'); return; }
-    }
     const writable = await fileHandle.createWritable();
     await writable.write(JSON.stringify(items, null, 2));
     await writable.close();
@@ -302,16 +307,30 @@ async function saveToFile() {
 
 async function tryRestoreHandle() {
   try {
+    const dh = await idbGet('dh');
+    if (dh) {
+      const perm = await dh.queryPermission({mode:'readwrite'});
+      if (perm === 'granted') {
+        dirHandle = dh;
+      }
+    }
     const fh = await idbGet('fh');
     if (fh) {
       fileHandle = fh;
-      const perm = await fileHandle.queryPermission({mode:'read'});
-      if (perm === 'granted') {
+      // If we have dirHandle, permissions are already granted (readwrite on dir covers files)
+      if (dirHandle) {
         await loadFromFile();
         showApp();
       } else {
-        updateFileStatus(fileHandle.name + ' (click Reload to re-authorize)');
-        showApp();
+        // Legacy: file handle without dir handle — try read permission
+        const perm = await fileHandle.queryPermission({mode:'read'});
+        if (perm === 'granted') {
+          await loadFromFile();
+          showApp();
+        } else {
+          updateFileStatus(fileHandle.name + ' (click Connect to re-authorize)');
+          showApp();
+        }
       }
     }
   } catch(e) {}
@@ -325,8 +344,13 @@ function showApp() {
 
 function updateFileStatus(name) {
   const el = document.getElementById('file-status');
-  if (name) { el.textContent = name; el.className = 'file-status ok'; document.getElementById('btn-connect').textContent = '⇄ Switch file'; }
-  else { el.textContent = 'No file'; el.className = 'file-status'; document.getElementById('btn-connect').textContent = 'Connect JSON file'; }
+  if (name) {
+    const dirName = dirHandle ? dirHandle.name + '/' : '';
+    el.textContent = dirName + name;
+    el.className = 'file-status ok';
+    document.getElementById('btn-connect').textContent = '⇄ Switch';
+  }
+  else { el.textContent = 'No folder'; el.className = 'file-status'; document.getElementById('btn-connect').textContent = 'Connect folder'; }
 }
 
 // --- Clipboard sync: single entry ---
@@ -525,6 +549,7 @@ function renderList() {
   const cols = Array.from({length: nCols}, () => []);
   vis.forEach((item, i) => cols[i % nCols].push(renderCard(item)));
   list.innerHTML = cols.map(c => `<div class="item-col">${c.join('')}</div>`).join('');
+  resolveImages();
 }
 
 function renderCard(item) {
@@ -540,7 +565,7 @@ function renderCard(item) {
     : `<span class="unsynced-badge" title="Sync to Claude" style="cursor:pointer" onclick="syncItem(event,'${item.id}')">⊘</span>`;
   const typeObj = TYPES.find(t=>t.key===item.type);
   const typeLabel = `<span class="type-badge" data-type="${item.type}" style="font-size:9px;padding:1px 6px" title="${typeObj?.label||item.type}">${typeObj?.short||item.type}</span>`;
-  return `<div class="card${exp?' expanded':''}" data-type="${item.type}" onclick="toggleCard('${item.id}',event)">
+  return `<div class="card${exp?' expanded':''}" data-type="${item.type}" data-id="${item.id}" onclick="toggleCard('${item.id}',event)" ondragover="cardDragOver(event)" ondragleave="cardDragLeave(event)" ondrop="cardDrop(event,'${item.id}')">
   <div class="card-top">
     ${typeLabel}
     <span class="card-title-text">${esc(title)}</span>
@@ -708,6 +733,90 @@ function fmtDate(iso){
   return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 }
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// --- Image blob resolution ---
+const _blobCache = {};
+
+async function resolveImages() {
+  if (!dirHandle) return;
+  const imgs = document.querySelectorAll('.card-content img');
+  for (const img of imgs) {
+    const src = img.getAttribute('src');
+    if (!src || !src.startsWith('images/')) continue;
+    if (_blobCache[src]) { img.src = _blobCache[src]; continue; }
+    try {
+      const imgDir = await dirHandle.getDirectoryHandle('images');
+      const fileName = src.slice('images/'.length);
+      const fh = await imgDir.getFileHandle(fileName);
+      const file = await fh.getFile();
+      const url = URL.createObjectURL(file);
+      _blobCache[src] = url;
+      img.src = url;
+    } catch(e) { /* image not found — leave alt text */ }
+  }
+}
+
+// --- Image drop on cards ---
+function hasImageFile(e) {
+  if (e.dataTransfer.types.includes('Files')) {
+    const items = e.dataTransfer.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) return true;
+    }
+  }
+  return false;
+}
+
+function cardDragOver(e) {
+  if (!hasImageFile(e)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.add('drop-over');
+}
+
+function cardDragLeave(e) {
+  e.currentTarget.classList.remove('drop-over');
+}
+
+async function cardDrop(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('drop-over');
+
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+
+  if (!dirHandle) { showToast('Connect a folder first to enable image drop'); return; }
+
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+
+  try {
+    const imgDir = await dirHandle.getDirectoryHandle('images', {create: true});
+    for (const file of files) {
+      // Generate unique filename: timestamp_originalname
+      const ts = Date.now().toString(36);
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = ts + '_' + safeName;
+
+      const fh = await imgDir.getFileHandle(fileName, {create: true});
+      const writable = await fh.createWritable();
+      await writable.write(file);
+      await writable.close();
+
+      // Append markdown image reference to card content
+      const ref = `\n\n![${file.name}](images/${fileName})`;
+      item.content = (item.content || '') + ref;
+    }
+    item.date = new Date().toISOString();
+    item.synced = false;
+    await saveToFile();
+    renderList();
+    showToast(`${files.length} image${files.length > 1 ? 's' : ''} added`);
+  } catch(err) {
+    showToast('Image save failed: ' + err.message);
+  }
+}
 
 // --- Init ---
 tryRestoreHandle();
