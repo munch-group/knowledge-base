@@ -581,5 +581,61 @@ def clean(file):
     click.echo(f"Cleaned {n} entries.")
 
 
+# ── Prune images ────────────────────────────────────────────
+
+
+@cli.command("prune-images")
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--dry-run", is_flag=True, help="Show what would be deleted without removing files.")
+def prune_images(file, dry_run):
+    """Delete images in the images/ subfolder that are not referenced by any entry."""
+    from pathlib import Path
+
+    entries = load(file)
+    base = Path(file).parent
+    img_dir = base / "images"
+
+    if not img_dir.is_dir():
+        click.echo("No images/ subfolder found.")
+        return
+
+    # Collect all image references from content and source fields
+    referenced = set()
+    for e in entries:
+        for field in ("content", "source"):
+            text = e.get(field, "")
+            if not isinstance(text, str):
+                continue
+            # Match markdown images: ![...](images/filename)
+            for m in re.finditer(r'!\[[^\]]*\]\(images/([^)]+)\)', text):
+                referenced.add(m.group(1))
+            # Match bare images/ paths (e.g. in HTML img tags)
+            for m in re.finditer(r'images/([^\s"\'<>)]+)', text):
+                referenced.add(m.group(1))
+
+    # Scan actual files
+    on_disk = set()
+    for p in img_dir.iterdir():
+        if p.is_file():
+            on_disk.add(p.name)
+
+    orphaned = on_disk - referenced
+    kept = on_disk - orphaned
+
+    if not orphaned:
+        click.echo(f"No orphaned images. All {len(on_disk)} images are referenced.")
+        return
+
+    for name in sorted(orphaned):
+        if dry_run:
+            click.echo(f"  would delete: images/{name}")
+        else:
+            (img_dir / name).unlink()
+            click.echo(f"  deleted: images/{name}")
+
+    total_label = "Would delete" if dry_run else "Deleted"
+    click.echo(f"\n{total_label} {len(orphaned)} orphaned images ({len(kept)} kept).")
+
+
 if __name__ == "__main__":
     cli()

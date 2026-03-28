@@ -134,5 +134,93 @@
     "source": "",
     "date": "2026-03-28T14:45:31.401Z",
     "synced": false
+  },
+  {
+    "id": "mnaj6jeqa41x",
+    "type": "fact",
+    "content": "https://bookdown.org/roback/bookdown-BeyondMLR/\n\n- Rolling Regression — PyMC example gallery https://www.pymc.io/projects/examples/en/latest/generalized_linear_models/GLM-rolling-regression.html\n- Analysis of An (AR(1)) Model in PyMC — PyMC example gallery https://www.pymc.io/projects/examples/en/latest/time_series/AR.html\n- Conditional Autoregressive (CAR) Models for Spatial Data — PyMC example gallery https://www.pymc.io/projects/examples/en/latest/spatial/conditional_autoregressive_priors.html\n- Conditional Autoregressive (CAR) Models for Spatial Data — PyMC example gallery https://www.pymc.io/projects/examples/en/latest/spatial/conditional_autoregressive_priors.html DartML/Stein-Variational-Gradient-Descent: code for the paper “Stein\n- https://www.pymc.io/projects/examples/en/latest/spatial/conditional_autoregressive_priors.html",
+    "title": "PtD using PyMC",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:14:43.394Z",
+    "synced": false
+  },
+  {
+    "id": "mnaj80vnw7eb",
+    "type": "fact",
+    "content": "**Joint prob / along sequence**\n\n- I can truncate the joint prob so I only consider the the last mill years and put the last bins without much power into the trash states.\n- If we had trees we would have perfect knowledge, and assuming an SMC, all information would be Markov, but since we only have tons, maybe there is something go gain by including also non-adjacent tons with some maximum distance. But that would present some problems with using data multiple times that would need to be addressed.\n- Use topologies as hidden states and make a TRAILS-like IM HMM model\n- I cannot use single base-pair transitions because then the model will “loose its memory” once into a stretch of 0-0 ton pairs. I need to either\n- If I group marginal trees in hidden states, then the process is only Markov if all trees in a group has the same probability of turning into a tree in another group.\n- That might be the case if I group trees by topology. It think it would also be the case if hidden states group trees by which pair coalesce last.\n- Not all the information is in the ton-pairs (because we don’t model whether a 3-ton is part of a neighboring 4-ton or not). But most of it is.\n- Posterior estimates thought: Assuming a fixed waiting time, can I treat the Ptd as a HMM and use Nbest to find the most likely labelling of time points.\n- Maybe I could even do a two-locus two-seq model and consider neigboring trees and include 1, 2, and 3 recombinations in the state space\n- Maybe it makes most sense to just sample recombination points and then treat SNPs between recombinations as part of the same tree and pairs of SNPs seperated by R recombination points as seperated by R recmobination events - with R in {1, 2, 3, 4, 5} or something sensible. If I “know” two trees, can I compute the number of recombination events separating two trees?\n- pymc-extras/notebooks/Making a Custom Statespace Model.ipynb at main · pymc-devs/pymc-extras [https://github.com/pymc-devs/pymc-extras/blob/main/notebooks/Making a Custom Statespace Model.ipynb](https://github.com/pymc-devs/pymc-extras/blob/main/notebooks/Making%20a%20Custom%20Statespace%20Model.ipynb)\n- pymc-experimental now includes state spaces models! - News - PyMC Discourse https://discourse.pymc.io/t/pymc-experimental-now-includes-state-spaces-models/12773\n- SMC’ SFS inference with rolling branch level heights.\nMake the rolling background state be total branch length (draft for sampling branch levels as random walk is in `phase-type-distributions/notebooks/smc-prime-tree-levels.py`).\n- \n- That would not require two-locus ARG joint probs, but would require modelling of allele frequencies like for selection.\n- The two conditional joint probabilities are computed using different state spaces:\nNo “non-diamond” recombination events allowed: Count recombination events like you do for each ton. Record if a coalescent event closes a “diamond loop”, in which case we reduce the nr of recombination events by 1. Redirect all edges leading to states with more than one recombination event to trash states.\nAt least one “non-diamond” recombination event happens: .Like above, but allowing only states with at least one recombination event to transition to absorbing.\n- https://www.biorxiv.org/content/10.1101/2024.03.24.586479v1.full.pdf",
+    "title": "\"Along the genome\" models",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:15:52.691Z",
+    "synced": false
+  },
+  {
+    "id": "mnaj9vzuy8pv",
+    "type": "fact",
+    "content": "Assuming discrete non-overlapping generations, the gene variant need to pass three hurdles:\n\n- Survive from fertilization to meiosis in sons and daughters (effects on organism) with probability $p_d$.\n- Survive from meiosis to ejaculation (effects on integrity of spermatogenesis,  X carrying sperm count) with probability $p_h$\n- Survive sperm competition from ejaculation to fertilization (effects on sperm X function, Y function, and sperm competition) with probability $p_c$\n\nTotal marginal fitness is $p = p_d\\, p_h\\, p_c$, were \n\n$$\n\\begin{align*} p_d &= \\frac{f'_d}{ f_d} \\\\ p_h &= f'_h \\\\ p_c &= (1-c) t'\\, f'_c + c\\, \\frac{t' f'_c}{t f_c} \\\\ &= t' f'_c \\bigg(1-c+\\frac{c}{t f_c}\\bigg) \\end{align*}\n$$\n\nHere, $p_d$ and $p_h$ are the marginal probabilities of diploid and spermatogenesis survival and $p_c$ is the marginal probability of fertilization. $f'$ and $t'$ represent individual fitness and transmission distortion and $f$ and $t$ the population means. Subscripts $f_d, f_h, f_c$ represent fitness in the diploid, haploid and competition stages. Sperm competition, $c$, is the proportion of oviduct sperm from other males. \n\n$$\np = \\frac{f'_d}{ f_d} f'_h\\, t'\\, f'_c\\, \\bigg(1-c+\\frac{c}{t f_c}\\bigg)\n$$\n\n$$\ns = \\begin{cases} t_d t_x,& \\text{with no sperm comp.} \\\\ > 0,& \\text{with strong sperm comp.}  \\end{cases}\n$$\n\nAssume an X-linked variant inducing a diploid relative fitness $f_d$ (relative to other population individuals), a haploid relative fitness $f_h$, and an X to Y transmission ratio of $t_x$. The selection coefficient on the driver will be $s = t_x f_d f_h$. \n\n$$\n\\begin{align*} s_x &= -f + t \\\\ s_y &= -f \\\\ \\end{align*}\n$$",
+    "title": "Theoretical predictions of male sex chromosome drive",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:17:19.674Z",
+    "synced": false
+  },
+  {
+    "id": "mnajv09s4d7q",
+    "type": "idea",
+    "content": "Compare counts of 11 + 00 pairs and 10 + 01 pairs. How is this stat distributed?",
+    "title": "Tree stats idea",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:33:44.992Z",
+    "synced": false
+  },
+  {
+    "id": "mnajw2ag8ced",
+    "type": "idea",
+    "content": "Are pathogenic variants more common among proteins interacting with potential drivers?",
+    "title": "Drive and LoF",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:34:34.264Z",
+    "synced": false
+  },
+  {
+    "id": "mnak733kes49",
+    "type": "quote",
+    "content": "Test quote",
+    "title": "quote",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:43:08.528Z",
+    "synced": false
+  },
+  {
+    "id": "mnak7fw0spip",
+    "type": "observation",
+    "content": "test obs",
+    "title": "observation",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:43:25.104Z",
+    "synced": false
+  },
+  {
+    "id": "mnak83u59hd3",
+    "type": "hypothesis",
+    "content": "test hypothesis",
+    "title": "test hypothesis",
+    "genes": [],
+    "tags": [],
+    "source": "",
+    "date": "2026-03-28T16:43:56.141Z",
+    "synced": false
   }
 ]

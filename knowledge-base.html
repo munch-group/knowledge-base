@@ -107,13 +107,13 @@ a { color: inherit; }
 .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 18px; border-radius: var(--r); font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 99; white-space: nowrap; }
 .toast.show { opacity: 1; }
 [data-type="fact"]        { --tc:#185FA5; --tbg:rgba(24,95,165,0.10); }
-[data-type="idea"]        { --tc:#854F0B; --tbg:rgba(133,79,11,0.10); }
-[data-type="hypothesis"]  { --tc:#534AB7; --tbg:rgba(83,74,183,0.10); }
-[data-type="quote"]       { --tc:#0F6E56; --tbg:rgba(15,110,86,0.10); }
+[data-type="idea"]        { --tc:#A68B0A; --tbg:rgba(166,139,10,0.10); }
+[data-type="hypothesis"]  { --tc:#993556; --tbg:rgba(153,53,86,0.10); }
+[data-type="quote"]       { --tc:#B54B32; --tbg:rgba(181,75,50,0.10); }
 [data-type="reference"]   { --tc:#5F5E5A; --tbg:rgba(95,94,90,0.10); }
-[data-type="observation"] { --tc:#3B6D11; --tbg:rgba(59,109,17,0.10); }
-[data-type="connection"]  { --tc:#993556; --tbg:rgba(153,53,86,0.10); }
-[data-type="people"]      { --tc:#7A5C1E; --tbg:rgba(122,92,30,0.10); }
+[data-type="observation"] { --tc:#0F6E56; --tbg:rgba(15,110,86,0.10); }
+[data-type="connection"]  { --tc:#534AB7; --tbg:rgba(83,74,183,0.10); }
+[data-type="people"]      { --tc:#854F0B; --tbg:rgba(133,79,11,0.10); }
 .type-badge { color: var(--tc); background: var(--tbg); } /* alt: background: #F0EFEC; border: 1px solid #D1D0CE; */
 .type-opt.active { color: var(--tc); background: var(--tbg); border-color: var(--tc); }
 </style>
@@ -193,6 +193,8 @@ a { color: inherit; }
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 // ============================================================
@@ -353,6 +355,12 @@ function updateFileStatus(name) {
   else { el.textContent = 'No folder'; el.className = 'file-status'; document.getElementById('btn-connect').textContent = 'Connect folder'; }
 }
 
+// --- Strip image markdown for sync (Claude can't see local images) ---
+function stripImageMd(text) {
+  if (!text) return text;
+  return text.replace(/\n*!\[[^\]]*\]\(images\/[^)]+\)/g, '').trim();
+}
+
 // --- Clipboard sync: single entry ---
 function syncItem(e, id) {
   e.stopPropagation();
@@ -363,7 +371,8 @@ function syncItem(e, id) {
   const genes = (item.genes||[]).length ? `\nGenes: ${item.genes.join(', ')}` : '';
   const tags = (item.tags||[]).length ? `\nTags: ${item.tags.join(', ')}` : '';
   const source = item.source ? `\nSource: ${item.source}` : '';
-  const prompt = `Please update your memory with this knowledge base entry (id: ${item.id}). If an entry with this id already exists in your memory, replace it entirely with this version. If it does not exist, add it.\n\n[${typeName}${title}] (id: ${item.id})\n${item.content}${genes}${tags}${source}`;
+  const cleanContent = stripImageMd(item.content);
+  const prompt = `Please update your memory with this knowledge base entry (id: ${item.id}). If an entry with this id already exists in your memory, replace it entirely with this version. If it does not exist, add it.\n\n[${typeName}${title}] (id: ${item.id})\n${cleanContent}${genes}${tags}${source}`;
   navigator.clipboard.writeText(prompt).then(() => {
     item.synced = true;
     saveToFile();
@@ -383,7 +392,8 @@ function syncAll() {
     const genes = (item.genes||[]).length ? `\nGenes: ${item.genes.join(', ')}` : '';
     const tags = (item.tags||[]).length ? `\nTags: ${item.tags.join(', ')}` : '';
     const source = item.source ? `\nSource: ${item.source}` : '';
-    return `[${typeName}${title}] (id: ${item.id})\n${item.content}${genes}${tags}${source}`;
+    const cleanContent = stripImageMd(item.content);
+    return `[${typeName}${title}] (id: ${item.id})\n${cleanContent}${genes}${tags}${source}`;
   });
   const ids = items.map(i => i.id);
   const prompt = `Please perform a FULL REPLACE of all knowledge base entries in your memory. The complete and authoritative set of entries is listed below. For each entry, if it already exists in your memory (by id), replace it entirely. If it is new, add it. IMPORTANT: any knowledge base entry currently in your memory whose id is NOT in this list has been deleted — please remove it from your memory.\n\nCurrent entry ids: ${ids.join(', ')}\n\n---\n\n${parts.join('\n\n---\n\n')}`;
@@ -723,7 +733,34 @@ window.addEventListener('resize', ()=>{ clearTimeout(_resizeTimer); _resizeTimer
 
 // --- Utilities ---
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function md(s){try{var h=marked.parse(s||'');return h.replace(/<a /g,'<a target="_blank" rel="noopener" ');}catch(e){return esc(s);}}
+function md(s){
+  if(!s) return '';
+  try {
+    // Extract math BEFORE marked so LaTeX doesn't get HTML-escaped
+    const placeholders = [];
+    function ph(tex, display) {
+      const id = '\x00MATH' + placeholders.length + '\x00';
+      placeholders.push({id, tex, display});
+      return id;
+    }
+    // Display math: $$...$$ and \[...\]
+    s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => ph(tex, true));
+    s = s.replace(/\\\[([\s\S]+?)\\\]/g, (_, tex) => ph(tex, true));
+    // LaTeX environments: \begin{...}...\end{...}
+    s = s.replace(/\\begin\{([^}]+)\}([\s\S]*?)\\end\{\1\}/g, (m, env, body) => ph(m, true));
+    // Inline math: $...$ and \(...\)
+    s = s.replace(/(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)\$(?!\$)/g, (_, tex) => ph(tex, false));
+    s = s.replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => ph(tex, false));
+    // Run marked on the math-free string
+    var h = marked.parse(s);
+    // Restore math placeholders with KaTeX rendering
+    for (const {id, tex, display} of placeholders) {
+      const rendered = katex.renderToString(tex.trim(), {displayMode: display, throwOnError: false});
+      h = h.replace(id, rendered);
+    }
+    return h.replace(/<a /g, '<a target="_blank" rel="noopener" ');
+  } catch(e) { return esc(s); }
+}
 function fmtDate(iso){
   const d=new Date(iso),now=new Date(),diff=now-d;
   if(diff<60000)return 'just now';
