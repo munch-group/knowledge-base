@@ -373,6 +373,24 @@ function showApp() {
   document.getElementById('connect-screen').style.display='none';
   document.getElementById('app-area').style.display='';
   updateFileStatus(fileHandle?.name || '');
+  applyClipParams();
+}
+
+function applyClipParams() {
+  const params = new URLSearchParams(window.location.search);
+  const content = params.get('content');
+  const source = params.get('source');
+  const title = params.get('title');
+  if (!content && !source) return;
+  // Clear params from URL so refresh doesn't re-trigger
+  window.history.replaceState({}, '', window.location.pathname);
+  // Open the add form and fill fields
+  const f = document.getElementById('add-form');
+  if (f.style.display === 'none') toggleForm();
+  if (content) document.getElementById('f-content').value = content;
+  if (source) document.getElementById('f-source').value = source;
+  if (title) document.getElementById('f-title').value = title;
+  document.getElementById('f-content').focus();
 }
 
 function updateFileStatus(name) {
@@ -796,7 +814,35 @@ async function deleteItem(e,id){
 }
 
 // --- Keyboard shortcuts ---
-document.addEventListener('keydown', e=>{
+async function tryClipImport() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) return false;
+    const clip = JSON.parse(text);
+    if (!clip._kb_clip) return false;
+    const f = document.getElementById('add-form');
+    if (f.style.display === 'none') toggleForm();
+    if (clip.content) document.getElementById('f-content').value = '> ' + clip.content.replace(/\n/g, '\n> ');
+    if (clip.source) document.getElementById('f-source').value = clip.source;
+    if (clip.title) document.getElementById('f-title').value = clip.title;
+    // Set type to reference
+    selectedType = 'reference';
+    buildTypePicker();
+    document.getElementById('f-content').focus();
+    // Clear the clip from clipboard so it doesn't re-trigger
+    navigator.clipboard.writeText('');
+    showToast('Clip imported — edit and save');
+    return true;
+  } catch(err) { return false; }
+}
+document.addEventListener('keydown', async e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='v'){
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+    if (document.getElementById('app-area').style.display==='none') return;
+    const imported = await tryClipImport();
+    if (imported) e.preventDefault();
+  }
   if((e.metaKey||e.ctrlKey)&&e.key==='n'){
     if(document.getElementById('app-area').style.display==='none') return;
     e.preventDefault();
