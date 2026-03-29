@@ -1584,7 +1584,7 @@
   {
     "id": "mnbcwuztcimc",
     "type": "fact",
-    "content": "X chromosome genes in the 90% ECH regions",
+    "content": "X chromosome genes in the ECH90 regions identified as subject to selective sweeps in non-Africans approximately 45,000-55,000 years before present.",
     "title": "ECH90 genes",
     "genes": [
       "ABCB7",
@@ -1688,7 +1688,8 @@
     "source": "Skov et al. / https://doi.org/10.1016/j.xgen.2023.100274",
     "date": "2026-03-29T06:07:00.329Z",
     "synced": false,
-    "_sortTag": "Sweep"
+    "_sortTag": "Sweep",
+    "connection": false
   },
   {
     "id": "mnbd1fmvr6b6",

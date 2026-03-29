@@ -118,6 +118,15 @@ a { color: inherit; }
 .conn-icon.active { opacity: 0.85; color: #185FA5; }
 .conn-check { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 4px; cursor: pointer; }
 .conn-check input { margin: 0; }
+.source-row { display: flex; gap: 6px; align-items: center; }
+.source-row input { flex: 1; }
+.btn-link-mode { font-size: 11px; white-space: nowrap; color: var(--text3); border-color: var(--border); }
+.btn-link-mode.active { color: #185FA5; border-color: #185FA5; background: rgba(24,95,165,0.08); }
+.link-mode-banner { font-family: var(--mono); font-size: 11px; color: #185FA5; background: rgba(24,95,165,0.06); border: 0.5px solid rgba(24,95,165,0.2); border-radius: var(--r); padding: 6px 10px; margin-bottom: 1rem; text-align: center; }
+.card.link-target { cursor: pointer; }
+.card.link-target:hover { border-color: #185FA5; box-shadow: 0 0 0 1.5px rgba(24,95,165,0.2); }
+.card-ref { display: inline-block; font-family: var(--mono); font-size: 10px; color: #185FA5; background: rgba(24,95,165,0.08); padding: 1px 6px; border-radius: 3px; cursor: pointer; margin-right: 3px; }
+.card-ref:hover { background: rgba(24,95,165,0.15); text-decoration: underline; }
 .card-bottom-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .synced-badge { font-family: var(--mono); font-size: 10px; color: #2a7a2a; }
 .unsynced-badge { font-family: var(--mono); font-size: 10px; color: #c44; }
@@ -204,7 +213,10 @@ a { color: inherit; }
         </div>
         <div class="field">
           <label>Source</label>
-          <input type="text" id="f-source" placeholder="Platt et al. 2026 / https://…">
+          <div class="source-row">
+            <input type="text" id="f-source" placeholder="Platt et al. 2026 / https://…">
+            <button class="btn btn-sm btn-link-mode" id="btn-link-mode" type="button" onclick="toggleLinkMode()" title="Link mode: click cards to insert references">◆ Link</button>
+          </div>
         </div>
         <label class="conn-check" style="margin-bottom:11px"><input type="checkbox" id="f-connection"> Connection</label>
         <div class="form-actions">
@@ -256,6 +268,7 @@ let tagSort = 'name';
 let selectedType = 'fact';
 let expandedId = null;
 let editingId = null;
+let linkMode = false;
 let fileHandle = null;
 let highlightGenes = new Set();
 
@@ -419,6 +432,16 @@ function stripImageMd(text) {
   return text.replace(/\n*!\[[^\]]*\]\(images\/[^)]+\)/g, '').trim();
 }
 
+// --- Format source for sync: expand [[id|title]] to "title (id: xyz)" ---
+function formatSourceForSync(s) {
+  if (!s) return '';
+  return s.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, id, title) => `${title} (id: ${id})`).replace(/\[\[([^\]]+)\]\]/g, (_, id) => {
+    const item = items.find(i => i.id === id);
+    const title = item ? (item.title || 'untitled') : 'unknown';
+    return `${title} (id: ${id})`;
+  });
+}
+
 // --- Clipboard sync: single entry ---
 function syncItem(e, id) {
   e.stopPropagation();
@@ -429,7 +452,7 @@ function syncItem(e, id) {
   const title = item.title ? ` — ${item.title}` : '';
   const genes = (item.genes||[]).length ? `\nGenes: ${item.genes.join(', ')}` : '';
   const tags = (item.tags||[]).length ? `\nTags: ${item.tags.join(', ')}` : '';
-  const source = item.source ? `\nSource: ${item.source}` : '';
+  const source = item.source ? `\nSource: ${formatSourceForSync(item.source)}` : '';
   const cleanContent = stripImageMd(item.content);
   const prompt = `Please update your memory with this knowledge base entry (id: ${item.id}). If an entry with this id already exists in your memory, replace it entirely with this version. If it does not exist, add it.\n\n[${typePrefix}${typeName}${title}] (id: ${item.id})\n${cleanContent}${genes}${tags}${source}`;
   navigator.clipboard.writeText(prompt).then(() => {
@@ -451,7 +474,7 @@ function syncAll() {
     const title = item.title ? ` — ${item.title}` : '';
     const genes = (item.genes||[]).length ? `\nGenes: ${item.genes.join(', ')}` : '';
     const tags = (item.tags||[]).length ? `\nTags: ${item.tags.join(', ')}` : '';
-    const source = item.source ? `\nSource: ${item.source}` : '';
+    const source = item.source ? `\nSource: ${formatSourceForSync(item.source)}` : '';
     const cleanContent = stripImageMd(item.content);
     return `[${typePrefix}${typeName}${title}] (id: ${item.id})\n${cleanContent}${genes}${tags}${source}`;
   });
@@ -645,7 +668,8 @@ function renderList() {
   const nCols = Math.max(1, Math.floor((listWidth + 8) / (colWidth + 8)));
   const cols = Array.from({length: nCols}, () => []);
   vis.forEach((item, i) => cols[i % nCols].push(renderCard(item)));
-  list.innerHTML = cols.map(c => `<div class="item-col">${c.join('')}</div>`).join('');
+  const banner = linkMode ? '<div class="link-mode-banner">Link mode — click a card to insert a reference · <a href="#" onclick="toggleLinkMode();return false">Done</a></div>' : '';
+  list.innerHTML = banner + cols.map(c => `<div class="item-col">${c.join('')}</div>`).join('');
   resolveImages();
   document.querySelectorAll('.gene-list').forEach(el => {
     el.classList.toggle('overflowing', el.scrollWidth > el.clientWidth);
@@ -673,7 +697,8 @@ function renderCard(item) {
     : `<span class="unsynced-badge" title="Sync to Claude" style="cursor:pointer" onclick="syncItem(event,'${item.id}')">⊘</span>`;
   const typeObj = TYPES.find(t=>t.key===item.type);
   const typeLabel = `<span class="type-badge" data-type="${item.type}" style="font-size:9px;padding:1px 6px" title="${typeObj?.label||item.type}">${typeObj?.short||item.type}</span>`;
-  return `<div class="card${exp?' expanded':''}" data-type="${item.type}" data-id="${item.id}" onclick="toggleCard('${item.id}',event)" ondragover="cardDragOver(event)" ondragleave="cardDragLeave(event)" ondrop="cardDrop(event,'${item.id}')">
+  const lm = linkMode && item.id !== editingId ? ' link-target' : '';
+  return `<div class="card${exp?' expanded':''}${lm}" data-type="${item.type}" data-id="${item.id}" onclick="toggleCard('${item.id}',event)" ondragover="cardDragOver(event)" ondragleave="cardDragLeave(event)" ondrop="cardDrop(event,'${item.id}')">
   <div class="card-top">
     ${typeLabel}
     <span class="card-title-text">${esc(title)}</span>
@@ -723,7 +748,54 @@ function toggleHighlightGene(gene) {
   renderList();
 }
 function setGeneFilter(gene) { activeGene = activeGene===gene ? null : gene; activeTag=null; activeType='all'; renderFilters(); renderList(); }
-function toggleCard(id,e){if(e&&e.target.closest('a[href]'))return;expandedId=expandedId===id?null:id;renderList();}
+function toggleCard(id,e){
+  if(e&&e.target.closest('a[href]'))return;
+  if(linkMode){
+    e&&e.stopPropagation();
+    insertCardRef(id);
+    return;
+  }
+  expandedId=expandedId===id?null:id;renderList();
+}
+
+// --- Link mode ---
+function toggleLinkMode() {
+  linkMode = !linkMode;
+  document.getElementById('btn-link-mode').classList.toggle('active', linkMode);
+  renderList();
+}
+
+function insertCardRef(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const title = item.title || item.content.split('\n')[0].slice(0,40);
+  const ref = `[[${id}|${title}]]`;
+  const input = document.getElementById('f-source');
+  const cur = input.value.trim();
+  input.value = cur ? cur + ' ' + ref : ref;
+  document.getElementById('f-connection').checked = true;
+  showToast('Linked: ' + title);
+}
+
+function expandLinkedCard(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) { showToast('Linked card not found'); return; }
+  expandedId = id;
+  renderList();
+  // Scroll to the card
+  setTimeout(() => {
+    const el = document.querySelector(`.card[data-id="${id}"]`);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 50);
+}
+
+function exitLinkMode() {
+  if (linkMode) {
+    linkMode = false;
+    document.getElementById('btn-link-mode').classList.remove('active');
+    renderList();
+  }
+}
 
 // --- Add / Edit ---
 function editItem(e, id) {
@@ -789,7 +861,9 @@ function cancelEdit() {
   document.getElementById('add-form').style.display = 'none';
   document.getElementById('btn-add-toggle').textContent = '+ Add';
   ['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-connection').checked=false;
   showFormEditButtons(false);
+  exitLinkMode();
   renderList();
 }
 
@@ -831,6 +905,7 @@ async function saveItem(){
   ['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-form').style.display='none';
   document.getElementById('btn-add-toggle').textContent='+ Add';
+  exitLinkMode();
   computeSortTags(); renderFilters(); renderList();
   showToast(wasEdit ? 'Updated' : 'Saved');
 }
@@ -913,14 +988,21 @@ window.addEventListener('resize', ()=>{ clearTimeout(_resizeTimer); _resizeTimer
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function formatSource(s) {
   if (!s) return '';
-  const urlMatch = s.match(/(https?:\/\/[^\s]+)/);
-  if (urlMatch) {
-    const url = urlMatch[1];
-    const before = esc(s.slice(0, urlMatch.index));
-    const after = esc(s.slice(urlMatch.index + url.length));
-    return `${before}<a href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(url)}</a>${after}`;
-  }
-  return esc(s);
+  // Replace [[id|title]] references with clickable chips
+  let out = s.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, id, title) => {
+    return `<span class="card-ref" onclick="event.stopPropagation();expandLinkedCard('${esc(id)}')" title="Go to: ${esc(title)}">${esc(title)}</span>`;
+  });
+  // Also handle [[id]] without title
+  out = out.replace(/\[\[([^\]]+)\]\]/g, (_, id) => {
+    const item = items.find(i => i.id === id);
+    const title = item ? (item.title || item.content.split('\n')[0].slice(0,30)) : id;
+    return `<span class="card-ref" onclick="event.stopPropagation();expandLinkedCard('${esc(id)}')" title="Go to: ${esc(title)}">${esc(title)}</span>`;
+  });
+  // Replace URLs with links
+  out = out.replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+    return `<a href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(url)}</a>`;
+  });
+  return out;
 }
 function md(s){
   if(!s) return '';
