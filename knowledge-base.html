@@ -85,9 +85,17 @@ a { color: inherit; }
 .card-content h1, .card-content h2, .card-content h3 { font-size: 13px; font-weight: 600; margin: 0.5em 0 0.3em; }
 .card-content img { max-width: 100%; height: auto; border-radius: var(--r); margin: 0.5em 0; }
 .card-meta { margin-top: 7px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.gene-list { display: flex; gap: 2px; flex: 1; min-width: 0; overflow: hidden; align-items: center; position: relative; }
+.gene-list .gene-more { display: none; position: absolute; right: 0; top: 0; padding: 2px 2px 2px 6px; background: linear-gradient(to right, transparent, var(--card) 30%); }
+.gene-list.overflowing .gene-more { display: block; }
+.card.expanded .card-meta { flex-direction: column; align-items: flex-start; }
+.card.expanded .gene-list { flex-wrap: wrap; overflow: visible; width: 100%; }
+.card.expanded .gene-list .gene-more { display: none; }
+.gene-copy { font-size: 11px; color: var(--text3); cursor: pointer; margin-left: 2px; opacity: 0.6; }
+.gene-copy:hover { opacity: 1; color: var(--text); }
 .tag { font-family: var(--mono); font-size: 10px; color: var(--text2); background: var(--bg2); padding: 2px 7px; border-radius: 3px; cursor: pointer; } /* alt bg: #F0EEE6 */
 .tag:hover { background: var(--bg3); }
-.gene { font-family: var(--mono); font-size: 10px; color: #185FA5; background: transparent; padding: 2px 7px; border-radius: 3px; cursor: pointer; } /* alt color: #8A2425 */
+.gene { font-family: var(--mono); font-size: 10px; color: #185FA5; background: transparent; padding: 2px 2px; border-radius: 3px; cursor: pointer; } /* alt color: #8A2425 */
 .gene:hover { background: rgba(24,95,165,0.08); }
 .gene-more { font-family: var(--mono); font-size: 10px; color: #185FA5; background: transparent; padding: 2px 7px; border-radius: 3px; cursor: default; } /* alt color: #8A2425 */
 .card-source { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
@@ -560,6 +568,9 @@ function renderList() {
   vis.forEach((item, i) => cols[i % nCols].push(renderCard(item)));
   list.innerHTML = cols.map(c => `<div class="item-col">${c.join('')}</div>`).join('');
   resolveImages();
+  document.querySelectorAll('.gene-list').forEach(el => {
+    el.classList.toggle('overflowing', el.scrollWidth > el.clientWidth);
+  });
 }
 
 function renderCard(item) {
@@ -567,9 +578,9 @@ function renderCard(item) {
   const title=item.title||item.content.split('\n')[0].slice(0,80)+(item.content.length>80?'…':'');
   const tags=(item.tags||[]).map(t=>`<span class="tag" onclick="tagClick(event,'${t.replace(/'/g,"\\'")}') ">${esc(t)}</span>`).join('');
   const allGenes = item.genes||[];
-  const visGenes = allGenes.slice(0,5).map(g=>`<span class="gene" onclick="geneClick(event,'${g.replace(/'/g,"\\'")}')"> ${esc(g)}</span>`).join('');
-  const geneOverflow = allGenes.length > 5 ? `<span class="gene-more" title="${allGenes.length - 5} more genes">…</span>` : '';
-  const genes = visGenes + geneOverflow;
+  const visGenes = allGenes.map(g=>`<span class="gene" onclick="geneClick(event,'${g.replace(/'/g,"\\'")}')\">${esc(g)}</span>`).join('');
+  const geneCopy = (exp && allGenes.length) ? `<span class="gene-copy" title="Copy gene list for search" onclick="copyGenes(event,'${item.id}')">⧉</span>` : '';
+  const genes = allGenes.length ? `<span class="gene-list">${visGenes}<span class="gene-more" title="${allGenes.length} genes">…</span>${geneCopy}</span>` : '';
   const claudeBadge = item.synced
     ? `<span class="synced-badge" title="Re-sync to Claude" style="cursor:pointer" onclick="syncItem(event,'${item.id}')">✓</span>`
     : `<span class="unsynced-badge" title="Sync to Claude" style="cursor:pointer" onclick="syncItem(event,'${item.id}')">⊘</span>`;
@@ -673,8 +684,8 @@ function selType(k){selectedType=k;buildTypePicker();}
 async function saveItem(){
   const content=document.getElementById('f-content').value.trim();
   if(!content){showToast('Content is required');return;}
-  const genes=document.getElementById('f-genes').value.split(',').map(g=>g.trim()).filter(Boolean);
-  const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const genes=document.getElementById('f-genes').value.split(/[\s,]+/).map(g=>g.trim()).filter(Boolean);
+  const tags=document.getElementById('f-tags').value.split(/[\s,]+/).map(t=>t.trim()).filter(Boolean);
   const now = new Date().toISOString();
   if(editingId){
     const item=items.find(i=>i.id===editingId);
@@ -703,6 +714,13 @@ async function saveItem(){
   showToast(wasEdit ? 'Updated' : 'Saved');
 }
 
+function copyGenes(e, id) {
+  e.stopPropagation();
+  const item = items.find(i => i.id === id);
+  if (!item || !item.genes?.length) return;
+  const text = '@' + item.genes.join(',');
+  navigator.clipboard.writeText(text).then(() => showToast('Copied: ' + text));
+}
 async function deleteFromCard(e,id){ e.stopPropagation(); return deleteItem(e,id); }
 async function deleteItem(e,id){
   e.stopPropagation();
