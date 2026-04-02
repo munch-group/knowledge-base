@@ -25,7 +25,10 @@ a { color: inherit; }
 .sidebar { width: 148px; flex-shrink: 0; border-right: 0.5px solid var(--border); display: flex; flex-direction: column; padding: 1rem 0; background: var(--bg2); overflow: hidden; }
 .main { flex: 1; overflow-y: auto; padding: 1.5rem 2rem 4rem; }
 .sb-title { font-size: 13px; font-weight: 500; padding: 0 1rem 0.75rem; border-bottom: 0.5px solid var(--border); margin-bottom: 0.75rem; }
-.sb-section { font-size: 11px; color: var(--text3); padding: 0 1rem; margin: 0.75rem 0 0.3rem; }
+.sb-section { font-size: 11px; color: var(--text3); padding: 0 1rem; margin: 0.75rem 0 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.sb-section:hover { color: var(--text2); }
+.sb-section .sb-arrow { font-size: 9px; transition: transform 0.15s; }
+.sb-section.collapsed .sb-arrow { transform: rotate(-90deg); }
 .filter-chip { display: block; width: 100%; text-align: left; font-size: 12px; padding: 5px 1rem; border: none; background: transparent; cursor: pointer; color: var(--text); transition: background 0.1s, color 0.1s; }
 .filter-chip:hover { background: rgba(24,95,165,0.08); }
 .filter-chip.active { background: rgba(24,95,165,0.12); color: var(--text); font-weight: 500; }
@@ -174,9 +177,9 @@ a { color: inherit; }
     <div class="sb-title">Knowledge Base</div>
     <div class="sb-scroll">
       <div id="conn-filter"></div>
-      <div class="sb-section" style="margin-top:0.75rem">Sort</div>
+      <div class="sb-section" id="sb-sort" style="margin-top:0.75rem" onclick="toggleSection('sb-sort','sort-list')"><span>Sort</span><span class="sb-arrow">▾</span></div>
       <div id="sort-list"></div>
-      <div class="sb-section" style="margin-top:0.75rem">Type</div>
+      <div class="sb-section" id="sb-type" style="margin-top:0.75rem" onclick="toggleSection('sb-type','filter-list')"><span>Type</span><span class="sb-arrow">▾</span></div>
       <div id="filter-list"></div>
       <div id="tag-filter-list"></div>
     </div>
@@ -528,10 +531,12 @@ function cleanupMemory() {
 const SORTS = [{key:'date',label:'Modified'},{key:'due',label:'Due'},{key:'synced',label:'Synced'},{key:'type',label:'Type'},{key:'tags',label:'Tags'},{key:'connection',label:'Connection'}];
 function renderSortList() {
   const arrows = {true:'↑', false:'↓'};
-  document.getElementById('sort-list').innerHTML = SORTS.map(s => {
+  const el = document.getElementById('sort-list');
+  el.innerHTML = SORTS.map(s => {
     const active = sortKey === s.key;
     return `<button class="filter-chip ${active?'active':''}" onclick="setSort('${s.key}')">${s.label}${active?' '+arrows[sortAsc]:''}</button>`;
   }).join('');
+  if (document.getElementById('sb-sort')?.classList.contains('collapsed')) el.style.display = 'none';
 }
 function setSort(key) {
   if (sortKey === key) sortAsc = !sortAsc;
@@ -621,7 +626,9 @@ function renderFilters() {
     const n=items.filter(i=>i.type===t.key).length;
     html+=`<button class="filter-chip ${activeType===t.key&&!activeTag?'active':''}" data-type="${t.key}" onclick="setFilter('${t.key}')">${t.label} <span class="sb-count">${n}</span></button>`;
   });
-  document.getElementById('filter-list').innerHTML=html;
+  const filterEl = document.getElementById('filter-list');
+  filterEl.innerHTML=html;
+  if (document.getElementById('sb-type')?.classList.contains('collapsed')) filterEl.style.display = 'none';
 
   const allTagsRaw = [...new Set(items.flatMap(i=>i.tags||[]))];
   const tagCounts = {};
@@ -640,15 +647,18 @@ function renderFilters() {
   const sortTitles = {name:'Sorted by name — click to sort by count', count:'Sorted by count — click to sort by date', date:'Sorted by date — click to sort by name'};
   let tagHtml = '';
   if (allTags.length > 0) {
-    tagHtml += `<div class="sb-section" style="margin-top:1rem;display:flex;align-items:center;justify-content:space-between;padding-right:0.75rem">
+    const tagCollapsed = document.getElementById('sb-tags')?.classList.contains('collapsed');
+    tagHtml += `<div class="sb-section${tagCollapsed?' collapsed':''}" id="sb-tags" style="margin-top:1rem;padding-right:0.75rem" onclick="toggleSection('sb-tags','tag-items')">
       <span>Tags</span>
-      <button onclick="cycleTagSort()" title="${sortTitles[tagSort]}" style="font-family:var(--mono);font-size:10px;background:transparent;border:0.5px solid var(--border2);border-radius:4px;padding:1px 5px;cursor:pointer;color:var(--text3);line-height:1.4">${sortIcons[tagSort]}</button>
+      <span style="display:flex;align-items:center;gap:4px"><button onclick="event.stopPropagation();cycleTagSort()" title="${sortTitles[tagSort]}" style="font-family:var(--mono);font-size:10px;background:transparent;border:0.5px solid var(--border2);border-radius:4px;padding:1px 5px;cursor:pointer;color:var(--text3);line-height:1.4">${sortIcons[tagSort]}</button><span class="sb-arrow">▾</span></span>
     </div>`;
+    tagHtml += `<div id="tag-items"${tagCollapsed?' style="display:none"':''}>`;
     allTags.forEach(tag => {
       const n = tagCounts[tag];
       const safe = tag.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       tagHtml += `<button class="filter-chip ${activeTag===tag?'active':''}" onclick="setTagFilter('${safe}')">${esc(tag)} <span class="sb-count">${n}</span></button>`;
     });
+    tagHtml += `</div>`;
   }
   document.getElementById('tag-filter-list').innerHTML = tagHtml;
 
@@ -658,6 +668,13 @@ function renderFilters() {
   el.innerHTML = hasFilter ? `<span style="cursor:pointer" onclick="clearAllFilters()" title="Back to all entries">← ${esc(title)}</span>` : esc(title);
 }
 
+function toggleSection(headerId, contentId) {
+  const header = document.getElementById(headerId);
+  const content = document.getElementById(contentId);
+  if (!header || !content) return;
+  header.classList.toggle('collapsed');
+  content.style.display = header.classList.contains('collapsed') ? 'none' : '';
+}
 function setConnFilter(mode) { connFilter = connFilter===mode ? 'all' : mode; renderFilters(); renderList(); }
 function setArchiveFilter() { archiveFilter = archiveFilter==='archived' ? 'active' : 'archived'; renderFilters(); renderList(); }
 function clearAllFilters() { activeType='all'; activeTag=null; activeGene=null; connFilter='all'; archiveFilter='active'; renderFilters(); renderList(); }
