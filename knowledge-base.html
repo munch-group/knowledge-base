@@ -24,14 +24,14 @@ a { color: inherit; }
 .sidebar { width: 148px; flex-shrink: 0; border-right: 0.5px solid var(--border); display: flex; flex-direction: column; padding: 1rem 0; background: var(--bg2); overflow: hidden; }
 .main { flex: 1; overflow-y: auto; padding: 1.5rem 2rem 4rem; }
 .sb-title { font-size: 13px; font-weight: 500; padding: 0 1rem 0.75rem; border-bottom: 0.5px solid var(--border); margin-bottom: 0.75rem; }
-.sb-section { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); padding: 0 1rem; margin: 0.75rem 0 0.3rem; }
-.filter-chip { display: block; width: 100%; text-align: left; font-family: var(--mono); font-size: 11px; padding: 5px 1rem; border: none; background: transparent; cursor: pointer; color: var(--text); transition: background 0.1s, color 0.1s; }
+.sb-section { font-size: 11px; color: var(--text3); padding: 0 1rem; margin: 0.75rem 0 0.3rem; }
+.filter-chip { display: block; width: 100%; text-align: left; font-size: 12px; padding: 5px 1rem; border: none; background: transparent; cursor: pointer; color: var(--text); transition: background 0.1s, color 0.1s; }
 .filter-chip:hover { background: rgba(24,95,165,0.08); }
 .filter-chip.active { background: rgba(24,95,165,0.12); color: var(--text); font-weight: 500; }
-.sb-count { float: right; font-size: 10px; color: var(--text3); }
+.sb-count { float: right; font-size: 11px; color: var(--text3); }
 .sb-scroll { overflow-y: auto; flex: 1; }
 .sb-bottom { flex-shrink: 0; padding: 0.75rem 1rem 0; border-top: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-.file-status { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-status { font-size: 10px; color: var(--text3); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-status.ok { color: #2a7a2a; }
 .btn { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--r); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text); font-family: var(--font); transition: background 0.1s; }
 .btn:hover { background: var(--bg3); }
@@ -164,6 +164,7 @@ a { color: inherit; }
     <div class="sb-scroll">
       <div class="sb-section">Sort</div>
       <div id="sort-list"></div>
+      <div id="conn-filter" style="margin-top:0.75rem"></div>
       <div class="sb-section" style="margin-top:0.75rem">Type</div>
       <div id="filter-list"></div>
       <div id="tag-filter-list"></div>
@@ -269,6 +270,7 @@ let selectedType = 'fact';
 let expandedId = null;
 let editingId = null;
 let linkMode = false;
+let connFilter = 'all'; // 'all' | 'conn' | 'noconn'
 let fileHandle = null;
 let highlightGenes = new Set();
 
@@ -568,6 +570,15 @@ function computeSortTags() {
 // --- Filters ---
 function renderFilters() {
   renderSortList();
+  // Connection filter
+  const nConn = items.filter(i => i.connection).length;
+  if (nConn > 0) {
+    document.getElementById('conn-filter').innerHTML =
+      `<button class="filter-chip ${connFilter==='conn'?'active':''}" onclick="setConnFilter('conn')">◆ Connections <span class="sb-count">${nConn}</span></button>` +
+      `<button class="filter-chip ${connFilter==='noconn'?'active':''}" onclick="setConnFilter('noconn')">◇ Singletons <span class="sb-count">${items.length - nConn}</span></button>`;
+  } else {
+    document.getElementById('conn-filter').innerHTML = '';
+  }
   const used = [...new Set(items.map(i=>i.type))];
   let html = `<button class="filter-chip ${activeType==='all'&&!activeTag?'active':''}" onclick="setFilter('all')">All <span class="sb-count">${items.length}</span></button>`;
   TYPES.filter(t=>used.includes(t.key)).forEach(t=>{
@@ -611,7 +622,8 @@ function renderFilters() {
   el.innerHTML = hasFilter ? `<span style="cursor:pointer" onclick="clearAllFilters()" title="Back to all entries">← ${esc(title)}</span>` : esc(title);
 }
 
-function clearAllFilters() { activeType='all'; activeTag=null; activeGene=null; renderFilters(); renderList(); }
+function setConnFilter(mode) { connFilter = connFilter===mode ? 'all' : mode; renderFilters(); renderList(); }
+function clearAllFilters() { activeType='all'; activeTag=null; activeGene=null; connFilter='all'; renderFilters(); renderList(); }
 function setFilter(type) { activeType=type; activeTag=null; activeGene=null; renderFilters(); renderList(); }
 function setTagFilter(tag) { activeTag = activeTag===tag ? null : tag; activeType='all'; activeGene=null; renderFilters(); renderList(); }
 function cycleTagSort() { tagSort = tagSort==='name' ? 'count' : tagSort==='count' ? 'date' : 'name'; renderFilters(); }
@@ -643,6 +655,8 @@ function renderList() {
   const q = freeTerms.join(' ');
   let vis=sortItems(items);
   if(activeType!=='all') vis=vis.filter(i=>i.type===activeType);
+  if(connFilter==='conn') vis=vis.filter(i=>i.connection);
+  if(connFilter==='noconn') vis=vis.filter(i=>!i.connection);
   if(activeTag) vis=vis.filter(i=>(i.tags||[]).includes(activeTag));
   if(activeGene) vis=vis.filter(i=>(i.genes||[]).some(g=>g.toUpperCase()===activeGene.toUpperCase()));
   if(geneAnd.length) vis=vis.filter(i=>geneAnd.every(g=>(i.genes||[]).some(ig=>ig.toUpperCase()===g)));
