@@ -6292,5 +6292,22 @@
     "_ghOpenIssues": 0,
     "_ghPrivate": false,
     "_sortTag": ""
+  },
+  {
+    "id": "mniwl2f7lena",
+    "type": "note",
+    "content": "Phasic repo to make it \"library only\". Move applications and models to other repos.",
+    "title": "",
+    "genes": [],
+    "tags": [
+      "Phasic"
+    ],
+    "source": "",
+    "connection": false,
+    "archived": false,
+    "due": "",
+    "date": "2026-04-03T12:52:05.635Z",
+    "synced": false,
+    "_sortTag": ""
   }
 ]
