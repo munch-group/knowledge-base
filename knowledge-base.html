@@ -167,7 +167,16 @@ a { color: inherit; }
 [data-type="idea"]        { --tc:#A68B0A; --tbg:rgba(166,139,10,0.10); }
 [data-type="note"]        { --tc:#6b6b70; --tbg:rgba(95,94,90,0.10); }
 [data-type="people"]      { --tc:#854F0B; --tbg:rgba(133,79,11,0.10); }
+[data-type="github"]      { --tc:#6e40c9; --tbg:rgba(110,64,201,0.10); }
 .type-badge { color: var(--tc); background: var(--tbg); } /* alt: background: #F0EFEC; border: 1px solid #D1D0CE; */
+.gh-issues-icon { font-size: 11px; cursor: pointer; opacity: 0.45; color: var(--text3); transition: opacity 0.15s; display: inline-flex; align-items: center; gap: 2px; }
+.gh-issues-icon:hover { opacity: 0.85; }
+.gh-issues-count { font-family: var(--mono); font-size: 9px; }
+.gh-meta { font-family: var(--mono); font-size: 10px; color: var(--text3); display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.gh-pat-input { display: flex; gap: 6px; align-items: center; }
+.gh-pat-input input { flex: 1; font-family: var(--mono); font-size: 10px; padding: 4px 8px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r); color: var(--text); outline: none; }
+.gh-status { font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+.gh-status.ok { color: #6e40c9; }
 .type-opt.active { color: var(--tc); background: var(--tbg); border-color: var(--tc); }
 </style>
 </head>
@@ -187,6 +196,10 @@ a { color: inherit; }
     <div class="sb-bottom">
       <div class="file-status" id="file-status">No file connected</div>
       <button class="btn btn-sm btn-wide" id="btn-connect" onclick="connectFolder()">Connect folder</button>
+      <div id="gh-area">
+        <div class="gh-status" id="gh-status"></div>
+        <div id="gh-controls"></div>
+      </div>
     </div>
   </div>
   <div class="main" id="main-area">
@@ -280,6 +293,7 @@ const TYPES = [
   {key:'fact',label:'Fact',short:'Fact'},{key:'reference',label:'Reference',short:'Ref'},
   {key:'observation',label:'Observation',short:'Obs'},{key:'hypothesis',label:'Hypothesis',short:'Hypo'},
   {key:'idea',label:'Idea',short:'Idea'},{key:'note',label:'Note',short:'Note'},{key:'people',label:'Person',short:'Pers'},
+  {key:'github',label:'GitHub',short:'GH'},
 ];
 let items = [];
 let activeType = 'all';
@@ -296,6 +310,9 @@ let connFilter = 'all'; // 'all' | 'conn' | 'noconn'
 let archiveFilter = 'active'; // 'active' | 'archived'
 let fileHandle = null;
 let highlightGenes = new Set();
+let ghIssuesRepo = null; // when set, show issues for this repo full_name
+let ghIssuesItems = [];  // temporary issue cards (not saved to JSON)
+const _readmeCache = {};
 
 // --- IndexedDB (persist file handle across sessions) ---
 function idbOpen() {
@@ -677,13 +694,17 @@ function toggleSection(headerId, contentId) {
 }
 function setConnFilter(mode) { connFilter = connFilter===mode ? 'all' : mode; renderFilters(); renderList(); }
 function setArchiveFilter() { archiveFilter = archiveFilter==='archived' ? 'active' : 'archived'; renderFilters(); renderList(); }
-function clearAllFilters() { activeType='all'; activeTag=null; activeGene=null; connFilter='all'; archiveFilter='active'; renderFilters(); renderList(); }
+function clearAllFilters() { activeType='all'; activeTag=null; activeGene=null; connFilter='all'; archiveFilter='active'; ghIssuesRepo=null; ghIssuesItems=[]; renderFilters(); renderList(); }
 function setFilter(type) { activeType=type; activeTag=null; activeGene=null; renderFilters(); renderList(); }
 function setTagFilter(tag) { activeTag = activeTag===tag ? null : tag; activeType='all'; activeGene=null; renderFilters(); renderList(); }
 function cycleTagSort() { tagSort = tagSort==='name' ? 'count' : tagSort==='count' ? 'date' : 'name'; renderFilters(); }
 
 // --- List & Cards ---
 function renderList() {
+  // Issues sub-view: render temporary issue cards instead of normal items
+  if (ghIssuesRepo && ghIssuesItems.length >= 0) {
+    return renderIssuesList();
+  }
   const raw=(document.getElementById('search-input')?.value||'').trim();
   // Parse @gene and #tag tokens. Space = AND, comma = OR.
   //   @MAPT @HDAC6   → entries with BOTH genes
@@ -747,6 +768,39 @@ function renderList() {
   });
 }
 
+function renderIssuesList() {
+  const list = document.getElementById('item-list');
+  if (!list) return;
+  const q = (document.getElementById('search-input')?.value||'').trim().toLowerCase();
+  let vis = ghIssuesItems;
+  if (q) vis = vis.filter(i => i.title.toLowerCase().includes(q) || i.content.toLowerCase().includes(q) || (i.tags||[]).some(t=>t.toLowerCase().includes(q)));
+  if (vis.length === 0) {
+    list.innerHTML = `<div class="empty"><p>No open issues.</p></div>`;
+    return;
+  }
+  const colWidth = 450;
+  let listWidth = list.offsetWidth || Math.max(450, window.innerWidth - 260 - 48);
+  const nCols = Math.max(1, Math.floor((listWidth + 8) / (colWidth + 8)));
+  const cols = Array.from({length: nCols}, () => []);
+  vis.forEach((issue, i) => {
+    const exp = expandedId === issue.id;
+    const tags = (issue.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+    const assignee = issue._ghAssignee ? `<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">@${esc(issue._ghAssignee)}</span>` : '';
+    const html = `<div class="card${exp?' expanded':''}" data-type="github" data-id="${issue.id}" onclick="toggleCard('${issue.id}',event)">
+      <div class="card-top">
+        <span class="type-badge" data-type="github" style="font-size:9px;padding:1px 6px">#${issue._ghIssueNumber}</span>
+        <span class="card-title-text">${esc(issue.title)}</span>
+        <span class="card-date">${fmtDate(issue.date)}</span>
+      </div>
+      <div class="card-content${exp?'':' clamped'}">${exp ? md(issue.content) : esc(issue.content)}</div>
+      ${(tags||assignee)?`<div class="card-meta">${tags}${assignee?'<span class="spacer"></span>'+assignee:''}</div>`:''}
+      ${exp?`<div class="card-bottom"><span class="card-source"><a href="${esc(issue.source)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(issue.source)}</a></span></div>`:''}
+    </div>`;
+    cols[i % nCols].push(html);
+  });
+  list.innerHTML = cols.map(c => `<div class="item-col">${c.join('')}</div>`).join('');
+}
+
 function renderCard(item) {
   const exp=expandedId===item.id;
   const title=item.title||item.content.split('\n')[0].slice(0,80)+(item.content.length>80?'…':'');
@@ -782,14 +836,17 @@ function renderCard(item) {
     <span class="card-title-text">${esc(title)}</span>
     <span class="archive-icon${item.archived?' active':''}" title="${item.archived?'Unarchive':'Archive'}" onclick="toggleArchived(event,'${item.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>
     <span class="conn-icon${item.connection?' active':''}" title="${item.connection?'Connection (click to unset)':'Not a connection (click to set)'}" onclick="toggleConnection(event,'${item.id}')">${item.connection?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'}</span>
+    ${item.type==='github'&&item._ghOpenIssues?`<span class="gh-issues-icon" title="View open issues" onclick="ghShowIssues(event,'${item._ghFullName}','${item.title.replace(/'/g,"\\'")}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="gh-issues-count">${item._ghOpenIssues}</span></span>`:''}
     <span class="card-date">${fmtDate(item.date)}</span>
     ${claudeBadge}
   </div>
-  <div class="card-content${exp?'':' clamped'}">${exp?md(item.content):esc(item.content)}</div>
+  <div class="card-content${exp?'':' clamped'}" id="cc-${item.id}">${exp?md(item.content):esc(item.content)}</div>
+  ${(exp&&item.type==='github')?`<div class="gh-meta">${item._ghLang?'<span>'+esc(item._ghLang)+'</span>':''}${item._ghStars?'<span>★ '+item._ghStars+'</span>':''}${item._ghForks?'<span>⑂ '+item._ghForks+'</span>':''}${item._ghPrivate?'<span>private</span>':''}</div>`:''}
   ${(tags||genes||dueHtml)?`<div class="card-meta">${tags}${genes}${dueHtml?'<span class="spacer"></span>'+dueHtml:''}</div>`:''}
   ${exp?`<div class="card-bottom">
     <span class="card-source">${item.source ? formatSource(item.source) : ''}</span>
     <span class="card-bottom-actions">
+      ${item.type==='github'?`<button class="icon-btn" onclick="ghShowIssues(event,'${item._ghFullName}','${item.title.replace(/'/g,"\\'")}') " title="Issues" style="color:#6e40c9">⊙</button>`:''}
       <button class="icon-btn edit" onclick="editItem(event,'${item.id}')" title="Edit">✎</button>
       <button class="icon-btn delete" onclick="deleteFromCard(event,'${item.id}')" title="Delete">✕</button>
     </span>
@@ -835,6 +892,13 @@ function toggleCard(id,e){
     return;
   }
   expandedId=expandedId===id?null:id;renderList();
+  // Lazy-load README for GitHub cards when expanding
+  if (expandedId) {
+    const item = items.find(i => i.id === expandedId);
+    if (item && item.type === 'github' && item._ghFullName) {
+      ghExpandCard(item);
+    }
+  }
 }
 
 // --- Link mode ---
@@ -1241,7 +1305,166 @@ async function cardDrop(e, id) {
   }
 }
 
+// --- GitHub integration ---
+function ghPat() { return localStorage.getItem('gh_pat') || ''; }
+
+function ghHeaders() {
+  const h = { 'Accept': 'application/vnd.github+json' };
+  const pat = ghPat();
+  if (pat) h['Authorization'] = 'Bearer ' + pat;
+  return h;
+}
+
+function renderGhControls() {
+  const status = document.getElementById('gh-status');
+  const controls = document.getElementById('gh-controls');
+  const pat = ghPat();
+  if (pat) {
+    status.textContent = 'GitHub ✓';
+    status.className = 'gh-status ok';
+    controls.innerHTML = `<div style="display:flex;gap:4px"><button class="btn btn-sm btn-wide" onclick="ghSyncRepos()" style="color:#6e40c9;border-color:rgba(110,64,201,0.3)">↻ Sync GitHub</button><button class="btn btn-sm" onclick="ghDisconnect()" title="Remove token" style="color:var(--text3)">✕</button></div>`;
+  } else {
+    status.textContent = '';
+    status.className = 'gh-status';
+    controls.innerHTML = `<button class="btn btn-sm btn-wide" onclick="ghPromptPat()">Connect GitHub</button>`;
+  }
+}
+
+function ghPromptPat() {
+  const pat = prompt('Paste your GitHub Personal Access Token:');
+  if (!pat) return;
+  localStorage.setItem('gh_pat', pat.trim());
+  renderGhControls();
+  showToast('GitHub connected');
+}
+
+function ghDisconnect() {
+  localStorage.removeItem('gh_pat');
+  renderGhControls();
+  showToast('GitHub disconnected');
+}
+
+async function ghSyncRepos() {
+  const pat = ghPat();
+  if (!pat) { ghPromptPat(); return; }
+  showToast('Fetching repos…');
+  try {
+    let allRepos = [];
+    let page = 1;
+    while (true) {
+      const resp = await fetch(`https://api.github.com/user/repos?per_page=100&sort=updated&page=${page}`, { headers: ghHeaders() });
+      if (!resp.ok) throw new Error(`GitHub API ${resp.status}: ${resp.statusText}`);
+      const repos = await resp.json();
+      if (!repos.length) break;
+      allRepos = allRepos.concat(repos);
+      if (repos.length < 100) break;
+      page++;
+    }
+    // Upsert repos into items
+    let added = 0, updated = 0;
+    for (const repo of allRepos) {
+      const ghId = 'gh_' + repo.full_name.replace(/\//g, '_');
+      const existing = items.find(i => i.id === ghId);
+      if (existing) {
+        existing.title = repo.name;
+        existing.content = repo.description || '';
+        existing.tags = [...new Set([...(existing.tags||[]), ...(repo.topics||[])])];
+        existing.source = repo.html_url;
+        existing.date = repo.updated_at;
+        existing._ghFullName = repo.full_name;
+        existing._ghStars = repo.stargazers_count;
+        existing._ghForks = repo.forks_count;
+        existing._ghLang = repo.language;
+        existing._ghOpenIssues = repo.open_issues_count;
+        existing._ghPrivate = repo.private;
+        updated++;
+      } else {
+        items.push({
+          id: ghId, type: 'github', title: repo.name,
+          content: repo.description || '',
+          tags: repo.topics || [], genes: [],
+          source: repo.html_url, date: repo.updated_at,
+          synced: false, connection: false,
+          _ghFullName: repo.full_name,
+          _ghStars: repo.stargazers_count, _ghForks: repo.forks_count,
+          _ghLang: repo.language, _ghOpenIssues: repo.open_issues_count,
+          _ghPrivate: repo.private,
+        });
+        added++;
+      }
+    }
+    await saveToFile();
+    computeSortTags(); renderFilters(); renderList();
+    showToast(`GitHub: ${added} added, ${updated} updated`);
+  } catch(e) {
+    showToast('GitHub sync failed: ' + e.message);
+  }
+}
+
+async function ghFetchReadme(fullName) {
+  if (_readmeCache[fullName]) return _readmeCache[fullName];
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${fullName}/readme`, {
+      headers: { ...ghHeaders(), 'Accept': 'application/vnd.github.raw' }
+    });
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    _readmeCache[fullName] = text;
+    return text;
+  } catch { return null; }
+}
+
+async function ghExpandCard(item) {
+  if (!item._ghFullName) return;
+  const readme = await ghFetchReadme(item._ghFullName);
+  if (readme && expandedId === item.id) {
+    const el = document.querySelector(`.card[data-id="${item.id}"] .card-content`);
+    if (el) {
+      el.classList.remove('clamped');
+      el.innerHTML = md(readme);
+    }
+  }
+}
+
+async function ghShowIssues(e, fullName, repoTitle) {
+  e.stopPropagation();
+  showToast('Fetching issues…');
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${fullName}/issues?state=open&per_page=100`, { headers: ghHeaders() });
+    if (!resp.ok) throw new Error(`GitHub API ${resp.status}`);
+    const issues = await resp.json();
+    // Filter out pull requests (GitHub API returns PRs as issues too)
+    ghIssuesItems = issues.filter(i => !i.pull_request).map(issue => ({
+      id: 'ghi_' + issue.number,
+      type: 'github', title: issue.title,
+      content: issue.body || '',
+      tags: (issue.labels || []).map(l => l.name),
+      genes: [],
+      source: issue.html_url,
+      date: issue.created_at,
+      _ghIssueNumber: issue.number,
+      _ghIssueState: issue.state,
+      _ghAssignee: issue.assignee?.login,
+    }));
+    ghIssuesRepo = fullName;
+    expandedId = null;
+    renderList();
+    const el = document.getElementById('page-title');
+    el.innerHTML = `<span style="cursor:pointer" onclick="ghBackFromIssues()" title="Back to all entries">← ${esc(repoTitle)} issues (${ghIssuesItems.length})</span>`;
+    showToast(`${ghIssuesItems.length} open issues`);
+  } catch(err) {
+    showToast('Failed to fetch issues: ' + err.message);
+  }
+}
+
+function ghBackFromIssues() {
+  ghIssuesRepo = null;
+  ghIssuesItems = [];
+  renderFilters(); renderList();
+}
+
 // --- Init ---
+renderGhControls();
 tryRestoreHandle();
 </script>
 </body>
