@@ -109,7 +109,11 @@ a { color: inherit; }
 .preview-toggle .preview-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--text3); }
 .preview-toggle.active .preview-dot { background: var(--accent); border-color: var(--accent); }
 .preview-toggle.active { color: var(--text2); }
+.preview-toggle.half .preview-dot { border-color: var(--accent); }
+.preview-toggle.half { color: var(--text2); }
 .hide-previews .card-content.clamped { display: none; }
+.hide-meta .card-content.clamped { display: none; }
+.hide-meta .card:not(.expanded) .card-meta { display: none; }
 .highlight-toggle { font-family: var(--mono); font-size: 11px; color: var(--text3); cursor: pointer; display: flex; align-items: center; gap: 5px; }
 .highlight-toggle:hover { color: var(--text2); }
 .highlight-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--text3); }
@@ -279,7 +283,7 @@ a { color: inherit; }
           <button class="btn btn-sm" onclick="document.getElementById('highlight-input').value='';updateHighlightSet()">Clear</button>
         </div>
       </div>
-      <div id="item-list" class="hide-previews"></div>
+      <div id="item-list" class="hide-meta"></div>
     </div>
   </div>
 </div>
@@ -721,45 +725,50 @@ function renderList() {
     return renderIssuesList();
   }
   const raw=(document.getElementById('search-input')?.value||'').trim();
-  // Parse @gene and #tag tokens. Space = AND, comma = OR.
-  //   @MAPT @HDAC6   → entries with BOTH genes
-  //   @MAPT,HDAC6    → entries with EITHER gene
-  //   #ASD @MAPT     → tagged ASD AND has gene MAPT
-  //   Mix with free text: #ASD tau → tagged ASD, content matches "tau"
-  const tokens = raw.match(/[@#][^\s]+|\S+/g) || [];
-  const geneAnd = [], geneOr = [], tagAnd = [], tagOr = [];
-  const freeTerms = [];
-  // Build lookup sets for prefix resolution
+  // Parse search: comma with at least one flanking space = OR between groups.
+  // Within each group: @gene #tag free-text are AND. @g1,g2 and #t1,t2 (no spaces) = within-token OR.
   const allGeneNames = [...new Set(items.flatMap(i=>(i.genes||[]).map(g=>g.toUpperCase())))];
   const allTagNames = [...new Set(items.flatMap(i=>(i.tags||[]).map(t=>t.toLowerCase())))];
   function resolveGene(prefix) {
     const up = prefix.toUpperCase();
-    const exact = allGeneNames.find(g => g === up);
-    if (exact) return up;
-    const matches = allGeneNames.filter(g => g.startsWith(up));
-    return matches.length === 1 ? matches[0] : up;
+    if (allGeneNames.includes(up)) return up;
+    const m = allGeneNames.filter(g => g.startsWith(up));
+    return m.length === 1 ? m[0] : up;
   }
   function resolveTag(prefix) {
     const lo = prefix.toLowerCase();
-    const exact = allTagNames.find(t => t === lo);
-    if (exact) return lo;
-    const matches = allTagNames.filter(t => t.startsWith(lo));
-    return matches.length === 1 ? matches[0] : lo;
+    if (allTagNames.includes(lo)) return lo;
+    const m = allTagNames.filter(t => t.startsWith(lo));
+    return m.length === 1 ? m[0] : lo;
   }
-  tokens.forEach(tok => {
-    if (tok.startsWith('@')) {
-      const names = tok.slice(1).split(',').filter(Boolean);
-      if (names.length > 1) names.forEach(n => geneOr.push(resolveGene(n)));
-      else if (names.length === 1) geneAnd.push(resolveGene(names[0]));
-    } else if (tok.startsWith('#')) {
-      const names = tok.slice(1).split(',').filter(Boolean);
-      if (names.length > 1) names.forEach(n => tagOr.push(resolveTag(n)));
-      else if (names.length === 1) tagAnd.push(resolveTag(names[0]));
-    } else {
-      freeTerms.push(tok.toLowerCase());
-    }
-  });
-  const q = freeTerms.join(' ');
+  function parseGroup(str) {
+    const tokens = str.match(/[@#][^\s]+|\S+/g) || [];
+    const geneAnd = [], geneOr = [], tagAnd = [], tagOr = [], freeTerms = [];
+    tokens.forEach(tok => {
+      if (tok.startsWith('@')) {
+        const names = tok.slice(1).split(',').filter(Boolean);
+        if (names.length > 1) names.forEach(n => geneOr.push(resolveGene(n)));
+        else if (names.length === 1) geneAnd.push(resolveGene(names[0]));
+      } else if (tok.startsWith('#')) {
+        const names = tok.slice(1).split(',').filter(Boolean);
+        if (names.length > 1) names.forEach(n => tagOr.push(resolveTag(n)));
+        else if (names.length === 1) tagAnd.push(resolveTag(names[0]));
+      } else {
+        freeTerms.push(tok.toLowerCase());
+      }
+    });
+    return { geneAnd, geneOr, tagAnd, tagOr, q: freeTerms.join(' ') };
+  }
+  function matchesGroup(i, g) {
+    if (g.geneAnd.length && !g.geneAnd.every(gn=>(i.genes||[]).some(ig=>ig.toUpperCase()===gn))) return false;
+    if (g.geneOr.length && !g.geneOr.some(gn=>(i.genes||[]).some(ig=>ig.toUpperCase()===gn))) return false;
+    if (g.tagAnd.length && !g.tagAnd.every(t=>(i.tags||[]).some(it=>it.toLowerCase()===t))) return false;
+    if (g.tagOr.length && !g.tagOr.some(t=>(i.tags||[]).some(it=>it.toLowerCase()===t))) return false;
+    if (g.q && !(i.content.toLowerCase().includes(g.q)||(i.title||'').toLowerCase().includes(g.q)||(i.tags||[]).some(t=>t.toLowerCase().includes(g.q))||(i.genes||[]).some(gn=>gn.toLowerCase().includes(g.q))||(i.source||'').toLowerCase().includes(g.q))) return false;
+    return true;
+  }
+  // Split on comma with at least one flanking space
+  const orGroups = raw ? raw.split(/\s*,\s+|\s+,\s*/).map(s=>s.trim()).filter(Boolean).map(parseGroup) : [];
   let vis=sortItems(items);
   // Archive filter: show only archived when filter active, hide archived otherwise
   if(archiveFilter==='archived') vis=vis.filter(i=>i.archived);
@@ -769,11 +778,7 @@ function renderList() {
   if(connFilter==='noconn') vis=vis.filter(i=>!i.connection);
   if(activeTag) vis=vis.filter(i=>(i.tags||[]).includes(activeTag));
   if(activeGene) vis=vis.filter(i=>(i.genes||[]).some(g=>g.toUpperCase()===activeGene.toUpperCase()));
-  if(geneAnd.length) vis=vis.filter(i=>geneAnd.every(g=>(i.genes||[]).some(ig=>ig.toUpperCase()===g)));
-  if(geneOr.length) vis=vis.filter(i=>geneOr.some(g=>(i.genes||[]).some(ig=>ig.toUpperCase()===g)));
-  if(tagAnd.length) vis=vis.filter(i=>tagAnd.every(t=>(i.tags||[]).some(it=>it.toLowerCase()===t)));
-  if(tagOr.length) vis=vis.filter(i=>tagOr.some(t=>(i.tags||[]).some(it=>it.toLowerCase()===t)));
-  if(q) vis=vis.filter(i=>i.content.toLowerCase().includes(q)||(i.title||'').toLowerCase().includes(q)||(i.tags||[]).some(t=>t.toLowerCase().includes(q))||(i.genes||[]).some(g=>g.toLowerCase().includes(q))||(i.source||'').toLowerCase().includes(q));
+  if(orGroups.length) vis=vis.filter(i=>orGroups.some(g=>matchesGroup(i,g)));
   const list=document.getElementById('item-list');
   if(!list)return;
   if(vis.length===0){
@@ -892,11 +897,24 @@ function geneClick(e, gene) {
   if (e.metaKey || e.ctrlKey) { e.preventDefault(); toggleHighlightGene(gene); return; }
   setGeneFilter(gene);
 }
+let previewMode = 'minimal'; // 'minimal' | 'compact' | 'full'
 function togglePreviews() {
+  previewMode = previewMode === 'minimal' ? 'compact' : previewMode === 'compact' ? 'full' : 'minimal';
+  applyPreviewMode();
+}
+function applyPreviewMode() {
   const list = document.getElementById('item-list');
   const toggle = document.getElementById('preview-toggle');
-  list.classList.toggle('hide-previews');
-  toggle.classList.toggle('active', !list.classList.contains('hide-previews'));
+  list.classList.remove('hide-previews', 'hide-meta');
+  toggle.classList.remove('active', 'half');
+  if (previewMode === 'full') {
+    toggle.classList.add('active');
+  } else if (previewMode === 'compact') {
+    list.classList.add('hide-previews');
+    toggle.classList.add('half');
+  } else {
+    list.classList.add('hide-meta');
+  }
 }
 function toggleHighlightInput() {
   const wrap = document.getElementById('highlight-input-wrap');
