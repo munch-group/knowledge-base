@@ -272,7 +272,7 @@ a { color: inherit; }
         </div>
       </div>
       <div class="searchbar">
-        <input type="search" id="search-input" placeholder="@MAPT @HDAC6 = AND · @MAPT,HDAC6 = OR · #tag · free text" oninput="renderList()" />
+        <input type="search" id="search-input" placeholder="space = AND · , = OR · @gene · @gene1,gene2 = OR · #tag · #tag1,tag2 = OR" oninput="renderList()" />
         <button class="btn btn-sm" onclick="document.getElementById('search-input').value='';renderList()">Clear</button>
       </div>
       <div class="highlight-bar" id="highlight-bar">
@@ -321,7 +321,7 @@ let activeGene = null;
 let sortKey = 'date';   // 'date' | 'synced' | 'type'
 let sortAsc = false;     // false = descending (newest/unsynced first)
 let tagSort = 'count';
-let selectedType = 'fact';
+let selectedType = 'note';
 let expandedId = null;
 let editingId = null;
 let linkMode = false;
