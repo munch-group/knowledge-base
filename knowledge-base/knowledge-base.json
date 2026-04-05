@@ -2940,7 +2940,7 @@
     "tags": [],
     "genes": [],
     "source": "https://github.com/munch-group/knowledge-base",
-    "date": "2026-04-05T13:56:12Z",
+    "date": "2026-04-05T15:08:19Z",
     "synced": false,
     "connection": false,
     "_ghFullName": "munch-group/knowledge-base",
@@ -2951,6 +2951,26 @@
     "_ghPrivate": false,
     "_sortTag": "",
     "_ghCommits": [
+      {
+        "sha": "d8f584c",
+        "msg": "update",
+        "date": "2026-04-05T15:08:17Z"
+      },
+      {
+        "sha": "bdca783",
+        "msg": "update",
+        "date": "2026-04-05T14:54:04Z"
+      },
+      {
+        "sha": "eb5906b",
+        "msg": "update",
+        "date": "2026-04-05T14:41:47Z"
+      },
+      {
+        "sha": "135c058",
+        "msg": "update",
+        "date": "2026-04-05T14:18:42Z"
+      },
       {
         "sha": "4dc2d77",
         "msg": "update",
@@ -2980,26 +3000,6 @@
         "sha": "948176a",
         "msg": "update",
         "date": "2026-04-04T12:57:33Z"
-      },
-      {
-        "sha": "c0f2b95",
-        "msg": "update",
-        "date": "2026-04-04T11:24:15Z"
-      },
-      {
-        "sha": "5f34990",
-        "msg": "update",
-        "date": "2026-04-04T08:52:39Z"
-      },
-      {
-        "sha": "9749ff7",
-        "msg": "update",
-        "date": "2026-04-04T08:36:23Z"
-      },
-      {
-        "sha": "fd72920",
-        "msg": "update",
-        "date": "2026-04-04T08:32:23Z"
       }
     ],
     "_ghIssuesRecent": []
@@ -15319,7 +15319,7 @@
   {
     "id": "_digest",
     "type": "_digest",
-    "date": "2026-04-05T15:04:27.572+00:00",
-    "markdown": "## Where am I\n\n**phasic**  \nMost active project. Fixed a Windows compilation issue (`rand_r`) and several version bumps two days ago. Three open issues remain: `update_weights` broken on reward-transformed graphs, a numerical issue in the time-inhomogeneous notebook, and comparing results with Pool & Nielsen for pairwise coalescence.\n\n**knowledge-base**  \nUpdated today. Ongoing UI and feature work on the personal knowledge base app.\n\n**lai-segment-analysis**  \nRevisited yesterday after a burst of work about a month ago fixing null distributions for left/right segments. Likely in a polish phase.\n\n**application-HFSP-2026**  \nUpdated yesterday. Grant application started about a month ago, still in progress.\n\n**emma-giraf**  \nMultiple commits four days ago (all labeled \"\u00c6ndring\"). Appears to be an active editing pass.\n\n**interaction-store**  \nGene interaction exploration tool using Claude Code and INDRA. Last touched about two weeks ago. Moved JSON files to git and switched to tracking the database as a `.db` file. Likely paused.\n\n**status-monitor-vscode**  \nVSCode extension for monitoring SLURM notebook runtimes. Reached v0.1.0 about two weeks ago with icon and README updates. Looks freshly released.\n\n**vscodenb** / **slurm-code**  \nBoth had version bump flurries about two weeks ago. Part of the same tooling release cycle.\n\n**geneinfo**  \nDraft code for circos and upset plots added about two weeks ago. Early stage.\n\n**munch-group-manuscript**  \nAdded multi-repo and multi-agent support about a month ago. Template project, likely stable.\n\n**franklin-cli**  \nUpdated read token and version bump about three weeks ago. Maintenance pass.\n\n**collective-student-grading** / **bioinformatics** / **bdmi-simulations**  \nAll updated yesterday. Teaching-related notebooks and materials.\n\n**genomic-thinking** / **selection-exercise** / **relate-tree-exercise**  \nCourse materials updated about a month ago. Course prep likely wrapped up.\n\n**baboons_v3_calling**  \nInitial commit about a month ago. Just started.\n\n**h2chrY**  \nEstimating heritability treating chrY effect as nuisance. One test issue open, no commits yet. Waiting to start.\n\n**iplot**  \nOne open issue: fix GitHub Action. No recent commits."
+    "date": "2026-04-05T15:16:33.843+00:00",
+    "markdown": "## Where am I\n\n**phasic**  \nMost active project. Fixed a Windows compilation issue (`rand_r`) and several version bumps two days ago. Three open issues: `update_weights` broken on reward-transformed graphs, a numerical issue in the time-inhomogeneous notebook, and comparing results with Pool & Nielsen for pairwise coalescence.\n\n**knowledge-base**  \nUpdated today. Ongoing development of the personal knowledge base web app, adding GitHub integration, digest features, and UI improvements.\n\n**lai-segment-analysis**  \nRevisited yesterday after a burst of work about a month ago fixing null distributions for left/right segments. Earlier commits from late January show initial analysis work. Likely in a polish phase.\n\n**application-HFSP-2026**  \nUpdated yesterday, created about a month ago. Grant application in progress.\n\n**emma-giraf**  \nMultiple commits four days ago (all labeled \"\u00c6ndring\"). Active editing pass.\n\n**collective-student-grading**  \nNotebook added yesterday. Initial commit about three months ago. Teaching-related.\n\n**bioinformatics**  \nLecture notes updated yesterday. Single maintenance commit.\n\n**bdmi-simulations**  \nBateson-Dobzhansky-Muller incompatibility simulations. Notebook updated yesterday.\n\n**interaction-store**  \nGene interaction exploration tool using Claude Code and INDRA. Last touched about two weeks ago. Moved JSON files to git, switched to tracking database as `.db`. Likely paused.\n\n**status-monitor-vscode**  \nVSCode extension for monitoring SLURM notebook runtimes. Reached v0.1.0 about two weeks ago. Looks freshly released.\n\n**geneinfo**  \nFunctions for gene summaries and annotation plots in Jupyter. Draft circos and upset plot code added two weeks ago. Two open issues: zoom centromere color in dark mode and a font size bug.\n\n**vscodenb** / **slurm-code**  \nBoth had version bump flurries about two weeks ago. Part of the same tooling release cycle.\n\n**munch-group-library**  \nTemplate for Python libraries. Updated pyproject.toml about two weeks ago, earlier work about a month ago.\n\n**franklin-cli**  \nDocker/JupyterLab launcher client. Updated read token and version bump about three weeks ago. Maintenance.\n\n**munch-group-manuscript**  \nTemplate for manuscript projects. Added multi-repo and multi-agent support about a month ago.\n\n**munch-group-project**  \nTemplate for Python library projects. Fixed Quarto publish path about a month ago.\n\n**genomic-thinking**  \nPopulation genomics course at BiRC. Several updates about a month ago, likely course prep.\n\n**selection-exercise** / **relate-tree-exercise** / **relate-selection-exercise** / **pca-admixture-exercise** / **psmc-exercise**  \nTeaching exercise repos. All updated one to two months ago. Course materials likely finalized.\n\n**application-NERD-2026**  \nSubmitted about six weeks ago. Final version committed late February. Done.\n\n**h2chrY**  \nEstimating heritability treating chrY effect as nuisance. Made ready for real data about two months ago, added chrX and GRM reading code about two and a half months ago. One test issue open. Ready for real data run.\n\n**arg-dashboard**  \nARG visualization dashboard. Version bumps about two months ago. Stable.\n\n**mit-ihh-pib**  \nSelection analysis on X chromosome. Hierarchical overlap analysis and iHS visualization scripts added about two and a half months ago. Analysis phase.\n\n**relate1Kgenomes**  \nNotebook added about six weeks ago. Early exploration.\n\n**chromatin-structure** / **hic-compartment-borders** / **cDEGexploration**  \nAll had single updates about six weeks ago. Likely exploratory or on hold.\n\n**maps**  \nSingle update about two months ago.\n\n**baboons_v3_calling**  \nInitial commit about a month ago. Just started.\n\n**cecilie-har-pib**  \nNew analyses added about three months ago.\n\n**munch-group-jupyterlite**  \nAdded arg-dashboard notebook about two months ago.\n\n**iplot**  \nOne open issue: fix GitHub Action. No recent commits."
   }
 ]

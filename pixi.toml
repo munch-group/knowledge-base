@@ -6,6 +6,7 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
+digest = "python kb-sync-and-digest.py knowledge-base/knowledge-base.json --days 30"
 
 [dependencies]
 click = ">=8.3.1,<9"

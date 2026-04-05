@@ -278,7 +278,49 @@ kb-manage.py dedup data.json       # remove duplicates by title
 kb-manage.py dedup data.json --by content --dry-run  # preview content-based dedup
 ```
 
+## Morning digest (kb-sync-and-digest.py)
+
+`kb-sync-and-digest.py` fetches fresh GitHub activity (commits, issues) for all synced repos and generates a natural language "Where am I" digest using the Claude API. The digest is printed to the terminal and saved to the JSON as a `_digest` entry, viewable in the web app via the "Where am I" toggle.
+
+### Prerequisites
+
+Two environment variables are required:
+
+- `GITHUB_TOKEN` — a GitHub personal access token
+- `ANTHROPIC_API_KEY` — an Anthropic API key
+
+### Usage
+
+```bash
+# Full sync + digest (default: all activity)
+pixi run digest
+
+# Only activity from the last 7 days
+pixi run python kb-sync-and-digest.py knowledge-base/knowledge-base.json --days 7
+
+# Sync GitHub data without generating a digest
+pixi run python kb-sync-and-digest.py knowledge-base/knowledge-base.json --sync-only
+
+# Use a different Claude model
+pixi run python kb-sync-and-digest.py knowledge-base/knowledge-base.json --model claude-haiku-4-5-20251001
+```
+
+### Daily cron job
+
+To run the digest automatically every morning at 7:00, add a crontab entry:
+
+```bash
+crontab -e
+```
+
+```cron
+0 7 * * * GITHUB_TOKEN=ghp_... ANTHROPIC_API_KEY=sk-ant-... cd /Users/kmt/knowledge-base && /Users/kmt/knowledge-base/.pixi/envs/default/bin/python kb-sync-and-digest.py knowledge-base/knowledge-base.json --days 30 >> /tmp/kb-digest.log 2>&1
+```
+
+Replace `ghp_...` and `sk-ant-...` with your actual tokens. The digest will be available in the web app next time you open it.
+
 ## Requirements
 
 - Google Chrome or Microsoft Edge (File System Access API required)
 - `kb-manage.py` requires Python 3 and `click` (`pip install click`)
+- `kb-sync-and-digest.py` requires Python 3, `click`, and `anthropic` (install via `pixi install`)
