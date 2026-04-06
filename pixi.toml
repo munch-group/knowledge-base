@@ -1,7 +1,7 @@
 [workspace]
 authors = ["Kasper Munch <kaspermunch@birc.au.dk>"]
 channels = ["conda-forge", "munch-group"]
-name = "knowledge-base"
+name = "memento"
 platforms = ["osx-arm64"]
 version = "0.1.0"
 
