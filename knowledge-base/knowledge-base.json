@@ -2801,14 +2801,14 @@
     ],
     "genes": [],
     "source": "https://github.com/munch-group/phasic",
-    "date": "2026-04-04T13:39:00Z",
+    "date": "2026-04-06T13:44:00Z",
     "synced": false,
     "connection": false,
     "_ghFullName": "munch-group/phasic",
     "_ghStars": 0,
     "_ghForks": 0,
     "_ghLang": "Jupyter Notebook",
-    "_ghOpenIssues": 7,
+    "_ghOpenIssues": 10,
     "_ghPrivate": false,
     "_sortTag": "Phasic",
     "archived": false,
@@ -2867,6 +2867,48 @@
     ],
     "_ghIssuesRecent": [
       {
+        "number": 10,
+        "title": "Tester 2 from vscode",
+        "state": "open",
+        "date": "2026-04-06T13:45:52Z",
+        "labels": [],
+        "url": "https://github.com/munch-group/phasic/issues/10"
+      },
+      {
+        "number": 12,
+        "title": "Issue Title",
+        "state": "open",
+        "date": "2026-04-06T13:45:40Z",
+        "labels": [
+          "bug"
+        ],
+        "url": "https://github.com/munch-group/phasic/issues/12"
+      },
+      {
+        "number": 11,
+        "title": "this is a tester",
+        "state": "closed",
+        "date": "2026-04-06T13:29:30Z",
+        "labels": [],
+        "url": "https://github.com/munch-group/phasic/issues/11"
+      },
+      {
+        "number": 5,
+        "title": "Translate benchmark code from R to python",
+        "state": "open",
+        "date": "2026-04-06T13:23:35Z",
+        "labels": [],
+        "url": "https://github.com/munch-group/phasic/issues/5"
+      },
+      {
+        "number": 9,
+        "title": "Tester issue from vscode",
+        "state": "open",
+        "date": "2026-04-06T12:45:31Z",
+        "labels": [],
+        "url": "https://github.com/munch-group/phasic/issues/9"
+      },
+      {
         "number": 8,
         "title": "update_weights does not work on reward transformed graphs because the reward transformation does not preserve the edges as parameterized (time-inhomogeneous.ipynb)",
         "state": "open",
@@ -2891,14 +2933,6 @@
         "url": "https://github.com/munch-group/phasic/issues/6"
       },
       {
-        "number": 5,
-        "title": "Translate benchmark code from R to python",
-        "state": "open",
-        "date": "2025-11-16T14:25:02Z",
-        "labels": [],
-        "url": "https://github.com/munch-group/phasic/issues/5"
-      },
-      {
         "number": 4,
         "title": "foobar",
         "state": "closed",
@@ -2913,22 +2947,6 @@
         "date": "2025-09-25T12:00:23Z",
         "labels": [],
         "url": "https://github.com/munch-group/phasic/issues/3"
-      },
-      {
-        "number": 2,
-        "title": "State vector length seg fault",
-        "state": "open",
-        "date": "2024-06-26T05:46:52Z",
-        "labels": [],
-        "url": "https://github.com/munch-group/phasic/issues/2"
-      },
-      {
-        "number": 1,
-        "title": "Initial state not recorded as created edges are later created back to them",
-        "state": "open",
-        "date": "2024-06-16T16:50:14Z",
-        "labels": [],
-        "url": "https://github.com/munch-group/phasic/issues/1"
       }
     ]
   },
@@ -2940,17 +2958,37 @@
     "tags": [],
     "genes": [],
     "source": "https://github.com/munch-group/knowledge-base",
-    "date": "2026-04-05T15:08:19Z",
+    "date": "2026-04-06T06:40:42Z",
     "synced": false,
     "connection": false,
     "_ghFullName": "munch-group/knowledge-base",
     "_ghStars": 0,
     "_ghForks": 0,
     "_ghLang": "HTML",
-    "_ghOpenIssues": 0,
+    "_ghOpenIssues": 1,
     "_ghPrivate": false,
     "_sortTag": "",
     "_ghCommits": [
+      {
+        "sha": "2e52aab",
+        "msg": "update",
+        "date": "2026-04-06T06:40:41Z"
+      },
+      {
+        "sha": "360f6cc",
+        "msg": "update",
+        "date": "2026-04-06T06:36:07Z"
+      },
+      {
+        "sha": "7576e81",
+        "msg": "update",
+        "date": "2026-04-06T06:31:35Z"
+      },
+      {
+        "sha": "3797385",
+        "msg": "update",
+        "date": "2026-04-05T15:22:30Z"
+      },
       {
         "sha": "d8f584c",
         "msg": "update",
@@ -2980,29 +3018,18 @@
         "sha": "52ed362",
         "msg": "update",
         "date": "2026-04-05T09:53:56Z"
-      },
-      {
-        "sha": "d12b008",
-        "msg": "update",
-        "date": "2026-04-04T14:21:45Z"
-      },
-      {
-        "sha": "867fbe7",
-        "msg": "update",
-        "date": "2026-04-04T14:13:33Z"
-      },
-      {
-        "sha": "c4b2eb7",
-        "msg": "update",
-        "date": "2026-04-04T13:46:32Z"
-      },
-      {
-        "sha": "948176a",
-        "msg": "update",
-        "date": "2026-04-04T12:57:33Z"
       }
     ],
-    "_ghIssuesRecent": []
+    "_ghIssuesRecent": [
+      {
+        "number": 1,
+        "title": "Add page with priorities next to digest",
+        "state": "open",
+        "date": "2026-04-05T16:29:18Z",
+        "labels": [],
+        "url": "https://github.com/munch-group/knowledge-base/issues/1"
+      }
+    ]
   },
   {
     "id": "gh_munch-group_emma-giraf",
@@ -6461,14 +6488,14 @@
     "tags": [],
     "genes": [],
     "source": "https://github.com/munch-group/primate-prot-var",
-    "date": "2025-10-13T12:56:36Z",
+    "date": "2026-04-05T16:30:37Z",
     "synced": false,
     "connection": false,
     "_ghFullName": "munch-group/primate-prot-var",
     "_ghStars": 0,
     "_ghForks": 0,
     "_ghLang": "Jupyter Notebook",
-    "_ghOpenIssues": 0,
+    "_ghOpenIssues": 1,
     "_ghPrivate": false,
     "_sortTag": "",
     "_ghCommits": [
@@ -6523,7 +6550,16 @@
         "date": "2025-09-09T18:26:18Z"
       }
     ],
-    "_ghIssuesRecent": []
+    "_ghIssuesRecent": [
+      {
+        "number": 1,
+        "title": "Complete VEP workflow",
+        "state": "open",
+        "date": "2026-04-05T16:30:37Z",
+        "labels": [],
+        "url": "https://github.com/munch-group/primate-prot-var/issues/1"
+      }
+    ]
   },
   {
     "id": "gh_munch-group_pythonsteps",
@@ -15320,11 +15356,11 @@
     "id": "_priorities",
     "type": "note",
     "title": "Priorities",
-    "content": "  \n\n## Week todo\nAdmin back on track  \nPhasic: PSMC model, BFFG  \nDrive: VEP workflow  \n  \n## Month tactic\n- Drive: Protein LoF with Leipzig, Primate LinARs, X/Y DEG\n- Xbrain: Relate 1000g, A/B border inference, HiC X/Y sperm, \n- Bioinformatics course\n- Drive: Pratto, Devanji collaboration\n\n## Quarter plan\n- Xbrain: Paper: XY-GWAS\n- Phasic: Joint prob., BFFG, Ghost IM, Paper\n- Phasic: Coalescent with selection, State lumping, Paper\n  \n## One year goals\n- Phasic paper on joint probability\n- Phasic paper on coalescent with selection\n- Phasic paper on PSMC/BFFG/demography\n- LoF paper on primate protein diversity (Relate, ILS)\n- Baboon paper on Awash and layered swampings (Phasic FMC, BDMI sims. Hum-Nean admix, macaque sperm hic)\n- More funding\n- Tree selection stats paper\n\n## Four year strategy\n- Larger group",
+    "content": " ## Week work\nAdmin back on track.  \nPhasic: PSMC model, BFFG.  \nDrive: VEP workflow.  \n\n## Month tactic\nDrive: Protein LoF with Leipzig, Primate LinARs, X/Y DEG.  \nXbrain: Relate 1000g, A/B border inference, HiC X/Y sperm.   \nBioinformatics course.  \nDrive: Pratto, Devanji collaboration.  \n\n## Quarter plan\nXbrain: Paper: XY-GWAS.  \nPhasic: Joint prob., BFFG, Ghost IM, Paper.  \nPhasic: Coalescent with selection, State lumping, Paper.  \n\n## Year goals\nPhasic paper on joint probability.  \nPhasic paper on coalescent with selection.  \n Phasic paper on PSMC/BFFG/demography.  \nLoF paper on primate protein diversity (Relate, ILS).  \nBaboon paper on Awash and layered swampings (Phasic FMC, BDMI sims. Hum-Nean admix, macaque hic).  \nMore funding.  \nTree selection stats paper.  \n\n## Three-year strategy\nLarger group.  ",
     "tags": [],
     "genes": [],
     "source": "",
-    "date": "2026-04-06T06:40:17.462Z",
+    "date": "2026-04-06T08:31:38.790Z",
     "synced": false,
     "connection": false,
     "archived": false,

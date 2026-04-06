@@ -129,11 +129,22 @@ a { color: inherit; }
 .digest-toggle.active { color: var(--text2); }
 .digest-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .digest-card { background: #ffffff; border: 1px solid var(--border); border-radius: var(--rl); padding: 1.5rem 1.5rem; font-family: var(--font); font-size: 13px; line-height: 1.7; color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
-.digest-card h2 { font-size: 15px; margin: 1.5rem 0 0.5rem; }
-.digest-card h2:first-child, .digest-card .digest-date + h2, .digest-card .digest-date:first-child + h2 { margin-top: 0; }
-.digest-card p { margin: 0.4rem 0; }
+.digest-card h1, .digest-card h2, .digest-card h3 { font-size: 13px; font-weight: 600; margin: 0.5em 0 0.3em; }
+.digest-card h2:first-child, .digest-card .digest-date + h2, .digest-card .digest-date:first-child + h2 { font-size: 15px; margin-top: 0; }
+.digest-card p { margin: 0 0 0.5em; }
+.digest-card p:last-child { margin-bottom: 0; }
+.digest-card ul, .digest-card ol { margin: 0.3em 0 0.5em 1.5em; }
+.digest-card li { margin: 0; }
+.digest-card li p { margin: 0; }
+.digest-card code { font-family: var(--mono); font-size: 12px; background: var(--bg2); padding: 1px 4px; border-radius: 3px; }
+.digest-card pre { background: var(--bg2); padding: 8px 10px; border-radius: var(--r); overflow-x: auto; margin: 0.5em 0; }
+.digest-card pre code { background: none; padding: 0; }
+.digest-card a { color: var(--tc, var(--text2)); text-decoration: underline; }
+.digest-card blockquote { border-left: 2px solid var(--border2); padding-left: 10px; color: var(--text2); margin: 0.5em 0; }
 .digest-card { position: relative; }
 .digest-date { font-family: var(--mono); font-size: 11px; color: var(--text3); float: right; line-height: 15px; margin-top: 2px; }
+.priorities-card { cursor: pointer; }
+.priorities-card:hover { border-color: var(--accent); }
 .tag { font-family: var(--mono); font-size: 10px; color: var(--text2); background: var(--bg2); padding: 2px 7px; border-radius: 3px; cursor: pointer; } /* alt bg: #F0EEE6 */
 .tag:hover { background: var(--bg3); }
 .gene { font-family: var(--mono); font-size: 10px; color: var(--text3); background: transparent; padding: 2px 2px; border-radius: 3px; cursor: pointer; }
@@ -303,7 +314,7 @@ a { color: inherit; }
 <div class="toast" id="toast"></div>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 // ============================================================
 // Knowledge Base — local Chrome/Edge app
@@ -805,9 +816,9 @@ function renderList() {
       const d = window._kbDigest;
       let digestHtml;
       if (!d || !d.markdown) { digestHtml = '<div class="digest-card"><p style="color:var(--text3)">No digest yet — run <code>pixi run digest</code></p></div>'; }
-      else { const dateStr = d.date ? fmtDate(d.date) : ''; digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + ' ago</div>' : ''}${md(d.markdown)}</div>`; }
+      else { const dateStr = d.date ? fmtDateAgo(d.date) : ''; digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + '</div>' : ''}${md(d.markdown)}</div>`; }
       const pCard = items.find(i => i.id === '_priorities');
-      const pH = pCard ? renderCard(pCard, true) : '<div class="card priorities-placeholder" style="border:1px dashed var(--border);color:var(--text3);text-align:center;padding:1.5rem;cursor:pointer" onclick="createPrioritiesCard()"><p>Click to create a priorities card</p></div>';
+      const pH = pCard ? renderPrioritiesCard(pCard) : '<div class="digest-card priorities-card" style="border-style:dashed;color:var(--text3);text-align:center;cursor:pointer" onclick="createPrioritiesCard()"><p>Click to create a priorities card</p></div>';
       list.innerHTML = `<div class="digest-col">${digestHtml}</div><div class="item-col">${pH}${emptyHtml}</div>`;
     } else {
       list.innerHTML = emptyHtml;
@@ -835,7 +846,7 @@ function renderList() {
   // Prepend priorities card to first column in digest view
   if (digestVisible && cols.length) {
     const pCard = items.find(i => i.id === '_priorities');
-    const pH = pCard ? renderCard(pCard, true) : '<div class="card priorities-placeholder" style="border:1px dashed var(--border);color:var(--text3);text-align:center;padding:1.5rem;cursor:pointer" onclick="createPrioritiesCard()"><p>Click to create a priorities card</p></div>';
+    const pH = pCard ? renderPrioritiesCard(pCard) : '<div class="digest-card priorities-card" style="border-style:dashed;color:var(--text3);text-align:center;cursor:pointer" onclick="createPrioritiesCard()"><p>Click to create a priorities card</p></div>';
     cols[0].unshift(pH);
   }
   const banner = linkMode ? '<div class="link-mode-banner">Link mode — click a card to insert a reference · <a href="#" onclick="toggleLinkMode();return false">Done</a></div>' : '';
@@ -847,7 +858,7 @@ function renderList() {
       digestHtml = '<div class="digest-card"><p style="color:var(--text3)">No digest yet — run <code>pixi run digest</code></p></div>';
     } else {
       const dateStr = d.date ? fmtDate(d.date) : '';
-      digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + ' ago</div>' : ''}${md(d.markdown)}</div>`;
+      digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + '</div>' : ''}${md(d.markdown)}</div>`;
     }
     colsHtml = `<div class="digest-col">${digestHtml}</div>`;
   }
@@ -931,7 +942,7 @@ function renderCard(item, forceExpand) {
     <span class="card-date">${fmtDate(item.date)}</span>
     ${claudeBadge}
   </div>
-  ${(()=>{ if(exp) return `<div class="card-content" id="cc-${item.id}">${md(item.content)}</div>`; const t=title.replace(/…$/,''); const c=item.content.trim(); if(c===t||c===(item.title||'').trim()) return ''; return `<div class="card-content clamped" id="cc-${item.id}">${esc(item.content)}</div>`; })()}
+  ${(()=>{ if(exp) { if(item.type==='github'&&item._ghFullName) { const desc = item.content ? '<p>'+esc(item.content)+'</p>' : ''; const cachedStatus = (item._ghCommits || item._ghIssuesRecent) ? ghBuildStatusHtml(item._ghCommits||[], item._ghIssuesRecent||[]) : '<span style="color:var(--muted)">Loading…</span>'; return `<div class="card-content" id="cc-${item.id}">${desc}${desc?'<hr>':''}<div id="gh-status-${item.id}">${cachedStatus}</div></div>`; } return `<div class="card-content" id="cc-${item.id}">${md(item.content)}</div>`; } const t=title.replace(/…$/,''); const c=item.content.trim(); if(c===t||c===(item.title||'').trim()) return ''; return `<div class="card-content clamped" id="cc-${item.id}">${esc(item.content)}</div>`; })()}
   ${(exp&&item.type==='github')?`<div class="gh-meta">${item._ghLang?'<span>'+esc(item._ghLang)+'</span>':''}${item._ghStars?'<span>★ '+item._ghStars+'</span>':''}${item._ghForks?'<span>⑂ '+item._ghForks+'</span>':''}${item._ghPrivate?'<span>private</span>':''}</div>`:''}
   <div class="card-meta">${tags}${genes}${dueHtml?'<span class="spacer"></span>'+dueHtml:''}${(!tags&&!genes&&!dueHtml)?'&nbsp;':''}</div>
   ${exp?`<div class="card-bottom">
@@ -988,6 +999,11 @@ async function createPrioritiesCard() {
   await saveToFile();
   editItem(new Event('click'), '_priorities');
   renderList();
+}
+function renderPrioritiesCard(item) {
+  const dateStr = item.date ? fmtDateAgo(item.date) : '';
+  const stale = item.date && (new Date() - new Date(item.date)) > 4*86400000;
+  return `<div class="digest-card priorities-card" onclick="editItem(event,'_priorities')">${dateStr ? '<div class="digest-date"' + (stale ? ' style="color:#c44"' : '') + '>Edited ' + esc(dateStr) + '</div>' : ''}<h2>Priorities</h2>${md(item.content)}</div>`;
 }
 function toggleHighlightInput() {
   const wrap = document.getElementById('highlight-input-wrap');
@@ -1096,8 +1112,11 @@ function editItem(e, id) {
 
 function toggleForm(){
   const f=document.getElementById('add-form');
+  const ta=document.getElementById('f-content');
   const open=f.style.display==='none';
+  if(!open && ta.style.height) window._taHeight=ta.style.height;
   f.style.display=open?'':'none';
+  if(open && window._taHeight) ta.style.height=window._taHeight;
   document.getElementById('btn-add-toggle').textContent=open?'× Cancel':'+ Add';
   if(open){editingId=null;buildTypePicker();document.getElementById('f-connection').checked=false;document.getElementById('f-archived').checked=false;document.getElementById('f-due').value='';document.getElementById('f-content').focus();showFormEditButtons(false);}
   else{editingId=null;['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-connection').checked=false;document.getElementById('f-archived').checked=false;document.getElementById('f-due').value='';showFormEditButtons(false);}
@@ -1329,8 +1348,6 @@ function md(s){
     // Inline math: $...$ and \(...\)
     s = s.replace(/(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)\$(?!\$)/g, (_, tex) => ph(tex, false));
     s = s.replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => ph(tex, false));
-    // Convert lines with only spaces to explicit breaks
-    s = s.replace(/^[ \t]+$/gm, '<br>');
     // Run marked on the math-free string
     var h = marked.parse(s);
     // Restore math placeholders with KaTeX rendering
@@ -1341,6 +1358,7 @@ function md(s){
     return h.replace(/<a /g, '<a target="_blank" rel="noopener" ');
   } catch(e) { return esc(s); }
 }
+function fmtDateAgo(iso){ const s=fmtDate(iso); return s==='just now'?s:s+' ago'; }
 function fmtDate(iso){
   const d=new Date(iso),now=new Date(),diff=now-d;
   if(diff<60000)return 'just now';
@@ -1596,61 +1614,62 @@ function ghStoreActivity(item, rawCommits, rawIssues) {
   }));
 }
 
-function ghBuildStatusMarkdown(readme, commits, issues) {
-  let s = '';
-  if (readme) s += readme + '\n\n---\n\n';
-  s += '## How I left it\n\n';
+function ghBuildStatusHtml(commits, issues) {
+  let h = '<h2>How I left it</h2>';
   if (commits.length) {
-    s += '**Recent commits:**\n';
+    h += '<p><strong>Recent commits:</strong></p><ul>';
     for (const c of commits) {
-      const ago = fmtDate(c.commit.author.date);
-      const msg = c.commit.message.split('\n')[0];
-      const sha = c.sha.slice(0, 7);
-      s += `- \`${sha}\` ${msg} *(${ago})*\n`;
+      // Handle both raw API format and cached format
+      const ago = fmtDate(c.date || (c.commit && c.commit.author.date));
+      const msg = esc(c.msg || (c.commit && c.commit.message.split('\n')[0]) || '');
+      h += `<li>${msg} <span style="color:var(--muted)">${ago}</span></li>`;
     }
-    s += '\n';
+    h += '</ul>';
   } else {
-    s += '*No recent commits.*\n\n';
+    h += '<p><em>No recent commits.</em></p>';
   }
   const closed = issues.filter(i => i.state === 'closed');
   if (closed.length) {
-    s += '**Recently closed issues:**\n';
+    h += '<p><strong>Recently closed issues:</strong></p><ul>';
     for (const i of closed) {
-      const labels = (i.labels || []).map(l => l.name).join(', ');
-      s += `- ~~#${i.number} ${i.title}~~${labels ? ' `' + labels + '`' : ''}\n`;
+      const labels = (i.labels || []).map(l => typeof l === 'string' ? l : l.name).join(', ');
+      const labelHtml = labels ? ' <code>' + esc(labels) + '</code>' : '';
+      const date = i.date || i.updated_at;
+      h += `<li><s>#${i.number} ${esc(i.title)}</s>${labelHtml} <span style="color:var(--muted)">${fmtDate(date)}</span></li>`;
     }
-    s += '\n';
+    h += '</ul>';
   }
-  s += '## Next steps\n\n';
-  const open = issues.filter(i => i.state === 'open');
+  h += '<h2>Next steps</h2>';
+  const open = issues.filter(i => i.state === 'open').sort((a, b) => b.number - a.number);
   if (open.length) {
+    h += '<ul>';
     for (const i of open) {
-      const labels = (i.labels || []).map(l => l.name).join(', ');
-      s += `- [ ] [#${i.number}](${i.html_url}) ${i.title}${labels ? ' `' + labels + '`' : ''}\n`;
+      const labels = (i.labels || []).map(l => typeof l === 'string' ? l : l.name).join(', ');
+      const labelHtml = labels ? ' <code>' + esc(labels) + '</code>' : '';
+      const url = i.url || i.html_url;
+      const date = i.date || i.updated_at;
+      h += `<li><a href="${esc(url)}" target="_blank" rel="noopener">#${i.number}</a> ${esc(i.title)}${labelHtml} <span style="color:var(--muted)">${fmtDate(date)}</span></li>`;
     }
+    h += '</ul>';
   } else {
-    s += '*No open issues.*\n';
+    h += '<p><em>No open issues.</em></p>';
   }
-  return s;
+  return h;
 }
 
 async function ghExpandCard(item) {
   if (!item._ghFullName) return;
   const fn = item._ghFullName;
-  const [readme, commits, recentIssues, latestIssueDate] = await Promise.all([
-    ghFetchReadme(fn),
+  const [commits, recentIssues, latestIssueDate] = await Promise.all([
     ghFetchCommits(fn),
     ghFetchRecentIssues(fn),
     ghFetchLatestIssueDate(fn),
   ]);
   ghStoreActivity(item, commits, recentIssues);
   if (expandedId === item.id) {
-    const statusMd = ghBuildStatusMarkdown(readme, commits, recentIssues);
-    const el = document.querySelector(`.card[data-id="${item.id}"] .card-content`);
-    if (el) {
-      el.classList.remove('clamped');
-      el.innerHTML = md(statusMd);
-    }
+    const statusHtml = ghBuildStatusHtml(commits, recentIssues);
+    const el = document.getElementById('gh-status-' + item.id);
+    if (el) el.innerHTML = statusHtml;
   }
   // Update mtime to latest of pushed_at and newest issue
   if (latestIssueDate && latestIssueDate > (item.date || '')) {
