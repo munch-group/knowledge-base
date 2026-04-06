@@ -303,8 +303,7 @@ a { color: inherit; }
 <div class="toast" id="toast"></div>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script>marked.use({ gfm: true, breaks: false });</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 <script>
 // ============================================================
 // Knowledge Base — local Chrome/Edge app
@@ -1155,8 +1154,8 @@ function buildTypePicker(){
 function selType(k){selectedType=k;buildTypePicker();}
 
 async function saveItem(){
-  const content=document.getElementById('f-content').value.trim();
-  if(!content){showToast('Content is required');return;}
+  const content=document.getElementById('f-content').value;
+  if(!content.trim()){showToast('Content is required');return;}
   const genes=document.getElementById('f-genes').value.split(/[\s,]+/).map(g=>g.trim()).filter(Boolean);
   const tags=document.getElementById('f-tags').value.split(/[\s,]+/).map(t=>t.trim()).filter(Boolean);
   const connection=document.getElementById('f-connection').checked;
@@ -1330,6 +1329,8 @@ function md(s){
     // Inline math: $...$ and \(...\)
     s = s.replace(/(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)\$(?!\$)/g, (_, tex) => ph(tex, false));
     s = s.replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => ph(tex, false));
+    // Convert lines with only spaces to explicit breaks
+    s = s.replace(/^[ \t]+$/gm, '<br>');
     // Run marked on the math-free string
     var h = marked.parse(s);
     // Restore math placeholders with KaTeX rendering
