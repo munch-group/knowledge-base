@@ -160,6 +160,9 @@ a { color: inherit; }
 .archive-icon { font-size: 11px; cursor: pointer; opacity: 0.35; color: var(--text3); transition: opacity 0.15s, color 0.15s; }
 .archive-icon:hover { opacity: 0.7; }
 .archive-icon.active { opacity: 0.85; color: #854F0B; }
+.pin-icon { font-size: 12px; cursor: pointer; opacity: 0.3; color: var(--text3); transition: opacity 0.15s, color 0.15s; user-select: none; }
+.pin-icon:hover { opacity: 0.7; }
+.pin-icon.active { opacity: 0.85; color: var(--accent); }
 .card.overdue { border-color: rgba(200, 0, 0, 0.5); }
 .card.due-today { border-color: rgba(200,0,0,0.8); }
 .card.due-soon { border-color: rgba(200, 0, 0, 0.3); }
@@ -179,13 +182,10 @@ a { color: inherit; }
 .card-ref { display: inline-block; font-family: var(--mono); font-size: 10px; color: var(--accent); background: rgba(217,119,87,0.08); padding: 1px 6px; border-radius: 3px; cursor: pointer; margin-right: 3px; }
 .card-ref:hover { background: rgba(217,119,87,0.15); text-decoration: underline; }
 .card-bottom-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.synced-badge { font-size: 12px; color: var(--text3); opacity: 0.45; cursor: pointer; transition: opacity 0.15s; }
-.synced-badge:hover { opacity: 0.85; }
-.unsynced-badge { font-size: 12px; color: var(--text3); opacity: 0.35; cursor: pointer; transition: opacity 0.15s; }
-.unsynced-badge:hover { opacity: 0.85; }
 .card-bottom-actions .icon-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px; opacity: 0.45; transition: opacity 0.15s; }
 .card-bottom-actions .icon-btn:hover { opacity: 0.85; }
 .card-bottom-actions .icon-btn.edit { color: var(--text); }
+.card-bottom-actions .icon-btn.sync-bottom { color: var(--text3); }
 .card-bottom-actions .icon-btn.delete { color: #c44; }
 .spacer { flex: 1; }
 #item-list { display: flex; gap: 8px; align-items: flex-start; }
@@ -609,6 +609,9 @@ function sortItems(arr) {
   // dir: 1 = ascending, -1 = descending (default for date = newest first)
   const dir = sortAsc ? 1 : -1;
   return arr.slice().sort((a,b) => {
+    // Pinned items always sort first
+    const pa = a.pinned ? 1 : 0, pb = b.pinned ? 1 : 0;
+    if (pa !== pb) return pb - pa;
     // When highlight is active, sort by highlight count first (most matches on top)
     if (highlightGenes.size) {
       const ha = (a.genes||[]).filter(g => highlightGenes.has(g.toUpperCase())).length;
@@ -927,9 +930,6 @@ function renderCard(item, forceExpand) {
   }).join('');
   const geneCopy = (exp && allGenes.length) ? `<span class="gene-copy" title="Copy gene list for search" onclick="copyGenes(event,'${item.id}')">⧉</span>` : '';
   const genes = allGenes.length ? `<span class="gene-list">${visGenes}<span class="gene-more" title="${allGenes.length} genes">…</span>${geneCopy}</span>` : '';
-  const claudeBadge = item.synced
-    ? `<span class="synced-badge" title="Re-sync to Claude" style="cursor:pointer" onclick="syncItem(event,'${item.id}')">✓</span>`
-    : `<span class="unsynced-badge" title="Sync to Claude" style="cursor:pointer" onclick="syncItem(event,'${item.id}')">⊘</span>`;
   const typeObj = TYPES.find(t=>t.key===item.type);
   const typeLabel = `<span class="type-badge" data-type="${item.type}" title="${typeObj?.label||item.type}">${TYPE_ICONS[item.type]||esc(typeObj?.short||item.type)}</span>`;
   const lm = linkMode && item.id !== editingId ? ' link-target' : '';
@@ -948,7 +948,7 @@ function renderCard(item, forceExpand) {
     <span class="conn-icon${item.connection?' active':''}" title="${item.connection?'Connection (click to unset)':'Not a connection (click to set)'}" onclick="toggleConnection(event,'${item.id}')">${item.connection?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'}</span>
     ${item.type==='github'&&item._ghOpenIssues?`<span class="gh-issues-icon" title="View open issues" onclick="ghShowIssues(event,'${item._ghFullName}','${item.title.replace(/'/g,"\\'")}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="gh-issues-count">${item._ghOpenIssues}</span></span>`:''}
     <span class="card-date">${fmtDate(item.date)}</span>
-    ${claudeBadge}
+    ${item.id!=='_priorities'&&item.id!=='_digest'?`<span class="pin-icon${item.pinned?' active':''}" title="${item.pinned?'Unpin':'Pin to top'}" onclick="togglePin(event,'${item.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>`:''}
   </div>
   ${(()=>{ if(exp) { if(item.type==='github'&&item._ghFullName) { const desc = item.content ? '<p>'+esc(item.content)+'</p>' : ''; const cachedStatus = (item._ghCommits || item._ghIssuesRecent) ? ghBuildStatusHtml(item._ghCommits||[], item._ghIssuesRecent||[]) : '<span style="color:var(--muted)">Loading…</span>'; return `<div class="card-content" id="cc-${item.id}">${desc}${desc?'<hr>':''}<div id="gh-status-${item.id}">${cachedStatus}</div></div>`; } return `<div class="card-content" id="cc-${item.id}">${md(item.content)}</div>`; } const t=title.replace(/…$/,''); const c=item.content.trim(); if(c===t||c===(item.title||'').trim()) return ''; return `<div class="card-content clamped" id="cc-${item.id}">${esc(item.content)}</div>`; })()}
   ${(exp&&item.type==='github')?`<div class="gh-meta">${item._ghLang?'<span>'+esc(item._ghLang)+'</span>':''}${item._ghStars?'<span>★ '+item._ghStars+'</span>':''}${item._ghForks?'<span>⑂ '+item._ghForks+'</span>':''}${item._ghPrivate?'<span>private</span>':''}</div>`:''}
@@ -958,6 +958,7 @@ function renderCard(item, forceExpand) {
     <span class="card-bottom-actions">
       ${item.type==='github'?`<button class="icon-btn" onclick="ghShowIssues(event,'${item._ghFullName}','${item.title.replace(/'/g,"\\'")}') " title="Issues" style="color:var(--accent)">⊙</button>`:''}
       <button class="icon-btn edit" onclick="editItem(event,'${item.id}')" title="Edit">✎</button>
+      <span class="icon-btn sync-bottom" onclick="syncItem(event,'${item.id}')" title="${item.synced?'Re-sync to Claude':'Sync to Claude'}">${item.synced?'✓':'⊘'}</span>
       <button class="icon-btn delete" onclick="deleteFromCard(event,'${item.id}')" title="Delete">✕</button>
     </span>
   </div>`:''}
@@ -1278,6 +1279,14 @@ async function toggleArchived(e, id) {
   renderFilters(); renderList();
   showToast(item.archived ? 'Archived' : 'Unarchived');
 }
+async function togglePin(e, id) {
+  e.stopPropagation();
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.pinned = !item.pinned;
+  await saveToFile();
+  renderList();
+}
 async function deleteFromCard(e,id){ e.stopPropagation(); return deleteItem(e,id); }
 async function deleteItem(e,id){
   e.stopPropagation();
@@ -1289,26 +1298,138 @@ async function deleteItem(e,id){
 }
 
 // --- Keyboard shortcuts ---
+function htmlToMarkdown(html) {
+  let s = html;
+  const footnotes = {};   // num → href
+
+  // --- Phase 1: extract superscript reference links → [N] footnotes ---
+
+  function collectNums(text, href) {
+    text.replace(/<[^>]+>/g, '').trim().split(/[,;\s]+/).forEach(n => {
+      if (/^\d+$/.test(n)) footnotes[n] = href;
+    });
+  }
+  // <a href="..."><sup>N</sup></a>
+  s = s.replace(/<a\b[^>]*\bhref="([^"]*)"[^>]*>\s*<sup\b[^>]*>([\s\S]*?)<\/sup>\s*<\/a>/gi, (_, href, inner) => {
+    collectNums(inner, href);
+    const nums = inner.replace(/<[^>]+>/g, '').trim();
+    return '[' + nums.split(/[,;\s]+/).filter(Boolean).join('][') + ']';
+  });
+  // <sup><a href="...">N</a></sup>
+  s = s.replace(/<sup\b[^>]*>\s*<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>\s*<\/sup>/gi, (_, href, inner) => {
+    collectNums(inner, href);
+    const nums = inner.replace(/<[^>]+>/g, '').trim();
+    return '[' + nums.split(/[,;\s]+/).filter(Boolean).join('][') + ']';
+  });
+  // <sup> with multiple <a> inside: <sup><a>1</a>,<a>2</a></sup>
+  s = s.replace(/<sup\b[^>]*>((?:\s*<a\b[^>]*>[\s\S]*?<\/a>[,;\s]*)+)<\/sup>/gi, (_, inner) => {
+    const all = [];
+    inner.replace(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, t) => {
+      const n = t.replace(/<[^>]+>/g, '').trim();
+      n.split(/[,;\s]+/).forEach(d => { if (/^\d+$/.test(d)) { footnotes[d] = href; all.push(d); } });
+    });
+    return all.length ? '[' + all.join('][') + ']' : '';
+  });
+  // Bare number-only links (no <sup>): <a href="...">6</a>
+  s = s.replace(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\d,;\s]+)<\/a>/gi, (_, href, nums) => {
+    const text = nums.trim();
+    if (/^[\d,;\s]+$/.test(text)) {
+      const parts = text.split(/[,;\s]+/).filter(Boolean);
+      parts.forEach(n => { if (/^\d+$/.test(n)) footnotes[n] = href; });
+      return '[' + parts.join('][') + ']';
+    }
+    return text;
+  });
+
+  // --- Phase 2: convert other HTML to markdown ---
+  // Remaining non-reference <sup>/<sub>
+  s = s.replace(/<sup\b[^>]*>([\s\S]*?)<\/sup>/gi, (_, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '').trim();
+    return text ? '^' + text + '^' : '';
+  });
+  s = s.replace(/<sub\b[^>]*>([\s\S]*?)<\/sub>/gi, (_, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '').trim();
+    return text ? '~' + text + '~' : '';
+  });
+  // Links
+  s = s.replace(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, text) => {
+    const clean = text.replace(/<[^>]+>/g, '').trim();
+    return clean && href ? `[${clean}](${href})` : clean;
+  });
+  // Emphasis
+  s = s.replace(/<(em|i)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_, _t, text) => `*${text.replace(/<[^>]+>/g, '')}*`);
+  s = s.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_, _t, text) => `**${text.replace(/<[^>]+>/g, '')}**`);
+
+  // --- Phase 3: strip remaining HTML, clean up ---
+  s = s.replace(/<[^>]+>/g, '');
+  s = s.replace(/[ \t]+/g, ' ').trim();
+  const tmp = document.createElement('textarea');
+  tmp.innerHTML = s;
+  s = tmp.value;
+
+  // --- Phase 4: append footnote definitions ---
+  const keys = Object.keys(footnotes).sort((a,b) => +a - +b);
+  if (keys.length) {
+    s += '\n\n' + keys.map(n => `[${n}]: ${footnotes[n]}`).join('\n');
+  }
+  return s;
+}
+function fillGenesFromMarkdown(content) {
+  // Extract gene names: italicized uppercase words like *MECP2*, *DDX3X*, *PCDH19*
+  const genes = new Set();
+  const re = /\*([A-Z][A-Z0-9]{1,})\*/g;
+  let m;
+  while ((m = re.exec(content)) !== null) genes.add(m[1]);
+  if (genes.size) {
+    const field = document.getElementById('f-genes');
+    const existing = field.value.split(/[\s,]+/).map(g => g.trim()).filter(Boolean);
+    const merged = [...new Set([...existing, ...genes])];
+    field.value = merged.join(', ');
+  }
+}
 async function tryClipImport() {
   try {
+    // Try reading structured clip (from bookmarklet) first
     const text = await navigator.clipboard.readText();
-    if (!text) return false;
-    const clip = JSON.parse(text);
-    if (!clip._kb_clip) return false;
-    const f = document.getElementById('add-form');
-    if (f.style.display === 'none') toggleForm();
-    if (clip.content) document.getElementById('f-content').value = '> ' + clip.content.replace(/\n/g, '\n> ');
-    if (clip.source) document.getElementById('f-source').value = clip.source;
-    if (clip.title) document.getElementById('f-title').value = clip.title;
-    // Set type to reference
-    selectedType = 'reference';
-    buildTypePicker();
-    document.getElementById('f-content').focus();
-    // Clear the clip from clipboard so it doesn't re-trigger
-    navigator.clipboard.writeText('');
-    showToast('Clip imported — edit and save');
-    return true;
-  } catch(err) { return false; }
+    let clip = null;
+    try { clip = JSON.parse(text); } catch(_) {}
+    if (clip && clip._kb_clip) {
+      const f = document.getElementById('add-form');
+      if (f.style.display === 'none') toggleForm();
+      const content = clip.html ? htmlToMarkdown(clip.html) : clip.content;
+      if (content) document.getElementById('f-content').value = '> ' + content.replace(/\n/g, '\n> ');
+      if (clip.source) document.getElementById('f-source').value = clip.source;
+      if (clip.title) document.getElementById('f-title').value = clip.title;
+      if (content) fillGenesFromMarkdown(content);
+      selectedType = 'reference';
+      buildTypePicker();
+      document.getElementById('f-content').focus();
+      navigator.clipboard.writeText('');
+      showToast('Clip imported — edit and save');
+      return true;
+    }
+    // Fall back: read HTML from clipboard (browser puts it there on normal copy)
+    const clipItems = await navigator.clipboard.read();
+    for (const item of clipItems) {
+      if (item.types.includes('text/html')) {
+        const blob = await item.getType('text/html');
+        const html = await blob.text();
+        if (!html) continue;
+        const content = htmlToMarkdown(html);
+        if (!content) continue;
+        const f = document.getElementById('add-form');
+        if (f.style.display === 'none') toggleForm();
+        document.getElementById('f-content').value = '> ' + content.replace(/\n/g, '\n> ');
+        fillGenesFromMarkdown(content);
+        selectedType = 'reference';
+        buildTypePicker();
+        document.getElementById('f-content').focus();
+        showToast('Clip imported from HTML — add source and save');
+        return true;
+      }
+    }
+    return false;
+  } catch(err) { console.warn('Clip import failed:', err); return false; }
 }
 document.addEventListener('keydown', async e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='v'){
@@ -1390,7 +1511,10 @@ function md(s){
       const rendered = katex.renderToString(tex.trim(), {displayMode: display, throwOnError: false});
       h = h.replace(id, rendered);
     }
-    return h.replace(/<a /g, '<a target="_blank" rel="noopener" ');
+    h = h.replace(/<a /g, '<a target="_blank" rel="noopener" ');
+    // Wrap purely numeric reference links as superscripts (from clipped footnotes)
+    h = h.replace(/<a ([^>]*)>([\d]+)<\/a>/g, '<sup><a $1>$2</a></sup>');
+    return h;
   } catch(e) { return esc(s); }
 }
 function fmtDateAgo(iso){ const s=fmtDate(iso); return s==='just now'?s:s+' ago'; }
@@ -1583,9 +1707,14 @@ async function ghSyncRepos() {
         added++;
       }
     }
+    // Remove cards for repos no longer returned (deleted or archived)
+    const ghFullNames = new Set(allRepos.map(r => r.full_name));
+    const removed = items.filter(i => i.type === 'github' && i._ghFullName && !ghFullNames.has(i._ghFullName));
+    const removedCount = removed.length;
+    if (removedCount) items = items.filter(i => !(i.type === 'github' && i._ghFullName && !ghFullNames.has(i._ghFullName)));
     await saveToFile();
     computeSortTags(); renderFilters(); renderList();
-    showToast(`GitHub: ${added} added, ${updated} updated — fetching activity…`);
+    showToast(`GitHub: ${added} added, ${updated} updated, ${removedCount} removed — fetching activity…`);
     // Fetch commits, recent issues, and latest issue date for all github cards
     const ghCards = items.filter(i => i.type === 'github' && i._ghFullName);
     let mtimeUpdated = 0;
@@ -1599,7 +1728,7 @@ async function ghSyncRepos() {
       if (latestDate && latestDate > (card.date || '')) { card.date = latestDate; mtimeUpdated++; }
     }));
     await saveToFile(); renderList();
-    showToast(`GitHub: ${added} added, ${updated} updated, ${mtimeUpdated} dates from issues`);
+    showToast(`GitHub: ${added} added, ${updated} updated, ${removedCount} removed, ${mtimeUpdated} dates from issues`);
   } catch(e) {
     showToast('GitHub sync failed: ' + e.message);
   }

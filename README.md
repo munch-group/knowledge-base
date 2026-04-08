@@ -138,7 +138,7 @@ Clip selected text from any web page directly into the knowledge base.
 Create a new bookmark in Chrome/Edge and paste the following as the URL:
 
 ```
-javascript:void(function(){var s=window.getSelection().toString().trim();var c=JSON.stringify({_kb_clip:true,content:s||'',source:location.href,title:document.title});navigator.clipboard.writeText(c).then(function(){var b=document.createElement('div');b.textContent='Clipped to KB!';b.style.cssText='position:fixed;top:20px;right:20px;background:#333;color:#fff;padding:8px 16px;border-radius:6px;z-index:999999;font:14px sans-serif';document.body.appendChild(b);setTimeout(function(){b.remove()},1500)})})()
+javascript:void(function(){var sel=window.getSelection();var s=sel.toString().trim();var h='';try{if(sel.rangeCount){var d=document.createElement('div');d.appendChild(sel.getRangeAt(0).cloneContents());h=d.innerHTML}}catch(e){}var c=JSON.stringify({_kb_clip:true,content:s||'',html:h||'',source:location.href,title:document.title});navigator.clipboard.writeText(c).then(function(){var b=document.createElement('div');b.textContent='Clipped to KB!';b.style.cssText='position:fixed;top:20px;right:20px;background:#333;color:#fff;padding:8px 16px;border-radius:6px;z-index:999999;font:14px sans-serif';document.body.appendChild(b);setTimeout(function(){b.remove()},1500)})})()
 ```
 
 ### Usage
