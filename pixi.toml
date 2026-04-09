@@ -7,6 +7,7 @@ version = "0.1.0"
 
 [tasks]
 digest = "python kb-sync-and-digest.py knowledge-base/ --days 30"
+push = "git add -u ; git add knowledge_base ; git commit -m 'update' ; git push"
 
 [dependencies]
 click = ">=8.3.1,<9"
