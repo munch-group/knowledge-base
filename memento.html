@@ -19,13 +19,13 @@
   --shadow: rgba(20, 20, 19, 0.04); --shadow-hover: rgba(20, 20, 19, 0.08);
   --accent: #D97757; --accent-hover: #c4684a;
 }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; overscroll-behavior-x: none; }
-html { overflow-x: hidden; overscroll-behavior-x: none; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100%; overflow: hidden; }
+html { overflow: hidden; overscroll-behavior-x: none; height: 100%; }
 ::placeholder { color: var(--text3); opacity: 0.4; }
 a { color: inherit; }
 .layout { display: flex; height: 100vh; overflow-x: hidden; }
 .sidebar { width: 200px; flex-shrink: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.25rem 0; background: var(--bg2); overflow: hidden; }
-.main { flex: 1; overflow-y: auto; padding: 1.5rem 2rem 4rem; }
+.main { flex: 1; min-width: 0; overflow-x: hidden; overflow-y: auto; padding: 1.5rem 2rem 4rem; }
 .sb-title { font-size: 14px; font-weight: 600; padding: 0 1.25rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
 .sb-section { font-size: 13px; font-weight: 600; color: var(--text); padding: 0 1.25rem; margin: 1rem 0 0.4rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; text-transform: uppercase; letter-spacing: 0.05em; }
 .sb-section:hover { color: var(--text2); }
