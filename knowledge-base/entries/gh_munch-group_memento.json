@@ -5,7 +5,7 @@
   "tags": [],
   "genes": [],
   "source": "https://github.com/munch-group/memento",
-  "date": "2026-04-08T15:01:27Z",
+  "date": "2026-04-09T17:42:45Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/memento",
@@ -17,54 +17,54 @@
   "_sortTag": "",
   "_ghCommits": [
     {
-      "sha": "c2e7e37",
-      "msg": "Changed backend to file structure for better git merge support",
-      "date": "2026-04-08T15:01:05Z"
-    },
-    {
-      "sha": "5687a7a",
+      "sha": "d7216ed",
       "msg": "update",
-      "date": "2026-04-08T14:27:57Z"
+      "date": "2026-04-09T17:42:43Z"
     },
     {
-      "sha": "4ebe8e2",
-      "msg": "added links and genes to clips",
-      "date": "2026-04-08T10:09:05Z"
-    },
-    {
-      "sha": "bd26eb3",
+      "sha": "2087ab0",
       "msg": "update",
-      "date": "2026-04-07T11:58:21Z"
+      "date": "2026-04-09T17:37:26Z"
     },
     {
-      "sha": "8ae3823",
-      "msg": "Small column fix",
-      "date": "2026-04-07T10:13:43Z"
-    },
-    {
-      "sha": "6ce28b5",
+      "sha": "7e735da",
       "msg": "update",
-      "date": "2026-04-06T14:21:14Z"
+      "date": "2026-04-09T17:33:10Z"
     },
     {
-      "sha": "d647704",
+      "sha": "b959f43",
       "msg": "update",
-      "date": "2026-04-06T14:20:14Z"
+      "date": "2026-04-09T17:30:58Z"
     },
     {
-      "sha": "362ee06",
+      "sha": "3c0b616",
       "msg": "update",
-      "date": "2026-04-06T14:18:03Z"
+      "date": "2026-04-09T17:28:22Z"
     },
     {
-      "sha": "822743e",
-      "msg": "More development",
-      "date": "2026-04-06T14:16:08Z"
-    },
-    {
-      "sha": "b0839a0",
+      "sha": "8ea3022",
       "msg": "update",
-      "date": "2026-04-06T14:15:35Z"
+      "date": "2026-04-09T17:16:10Z"
+    },
+    {
+      "sha": "4f3391a",
+      "msg": "update",
+      "date": "2026-04-09T17:04:40Z"
+    },
+    {
+      "sha": "3f221a3",
+      "msg": "update",
+      "date": "2026-04-09T13:47:21Z"
+    },
+    {
+      "sha": "75c8619",
+      "msg": "update",
+      "date": "2026-04-09T11:19:43Z"
+    },
+    {
+      "sha": "367615e",
+      "msg": "update",
+      "date": "2026-04-09T11:18:15Z"
     }
   ],
   "_ghIssuesRecent": [

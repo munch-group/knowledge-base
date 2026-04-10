@@ -1,0 +1,1 @@
+Is human admixture in Neanderthals more often homozygous on X than on autosomes - suggesting that admixture on X is "stripes" like?

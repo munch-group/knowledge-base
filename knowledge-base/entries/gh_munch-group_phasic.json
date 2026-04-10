@@ -7,7 +7,7 @@
   ],
   "genes": [],
   "source": "https://github.com/munch-group/phasic",
-  "date": "2026-04-08T15:15:33Z",
+  "date": "2026-04-10T00:10:49Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/phasic",
@@ -20,6 +20,31 @@
   "archived": false,
   "due": "",
   "_ghCommits": [
+    {
+      "sha": "9db8a07",
+      "msg": "Added figures",
+      "date": "2026-04-10T00:05:56Z"
+    },
+    {
+      "sha": "a6cd0f8",
+      "msg": "bug fixes in mathref docs",
+      "date": "2026-04-09T23:39:54Z"
+    },
+    {
+      "sha": "490ef0a",
+      "msg": "updated mathref book",
+      "date": "2026-04-09T13:26:35Z"
+    },
+    {
+      "sha": "441207f",
+      "msg": "renamed som to mathref",
+      "date": "2026-04-09T11:32:46Z"
+    },
+    {
+      "sha": "6244688",
+      "msg": "Created math reference as a book subproject under the website",
+      "date": "2026-04-09T11:12:50Z"
+    },
     {
       "sha": "d36b0f0",
       "msg": "Add initial draft of the SOM Production Plan document",
@@ -44,31 +69,6 @@
       "sha": "76d429d",
       "msg": "Added a notebook for hexgrid modelling with fewer resistance paramters",
       "date": "2026-04-08T09:47:26Z"
-    },
-    {
-      "sha": "d5cc20f",
-      "msg": "Fixed bugs and tested accuracy after removing base_weight and adding JAX/FFI support for log scale and callback to update_weights",
-      "date": "2026-04-08T09:45:22Z"
-    },
-    {
-      "sha": "65819a5",
-      "msg": "Removed old base_weight code and fixed a bug",
-      "date": "2026-04-07T18:59:44Z"
-    },
-    {
-      "sha": "bd1a144",
-      "msg": "Added initiall hexgrid support",
-      "date": "2026-04-07T18:25:48Z"
-    },
-    {
-      "sha": "fea041f",
-      "msg": "Tidied up files",
-      "date": "2026-04-07T15:01:03Z"
-    },
-    {
-      "sha": "e877d4d",
-      "msg": "Updated graph plot background theme and worked on psmc model",
-      "date": "2026-04-07T11:30:18Z"
     }
   ],
   "_ghIssuesRecent": [
