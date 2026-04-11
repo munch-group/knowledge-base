@@ -61,6 +61,8 @@ a { color: inherit; }
 .searchbar input:focus { border-color: var(--accent); }
 .add-form { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.25rem; margin-bottom: 1.25rem; }
 .add-form.gh-edit .field-full { display: none; }
+.add-form.inbox-edit .field { display: none; }
+.add-form.inbox-edit #field-content.field { display: block; }
 .field { margin-bottom: 11px; }
 .field label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text2); display: block; margin-bottom: 4px; }
 .field textarea { width: 100%; min-height: 90px; resize: vertical; font-family: var(--font); font-size: 14px; line-height: 1.6; padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: var(--r); color: var(--text); outline: none; }
@@ -148,7 +150,7 @@ a { color: inherit; }
 .digest-card { position: relative; }
 .digest-date { font-family: var(--mono); font-size: 11px; color: var(--text3); float: right; line-height: 15px; margin-top: 2px; }
 .priorities-card { cursor: pointer; }
-.inbox-card { cursor: default; }
+.inbox-card { cursor: pointer; }
 .priorities-card:hover { border-color: var(--border2); }
 .tag { font-family: var(--mono); font-size: 10px; color: var(--text2); background: var(--bg2); padding: 2px 7px; border-radius: 3px; cursor: pointer; } /* alt bg: #F0EEE6 */
 .tag:hover { background: var(--bg3); }
@@ -315,7 +317,7 @@ a { color: inherit; }
             <button class="btn btn-sm btn-link-mode" id="btn-link-mode" type="button" onclick="toggleLinkMode()" title="Link mode: click cards to insert references">◆ Link</button>
           </div>
         </div>
-        <div class="field-full" id="field-checks" style="display:flex;gap:16px;margin-bottom:11px">
+        <div class="field field-full" id="field-checks" style="display:flex;gap:16px;margin-bottom:11px">
           <label class="conn-check"><input type="checkbox" id="f-connection"> Connection</label>
           <label class="conn-check"><input type="checkbox" id="f-archived"> Archived</label>
         </div>
@@ -384,6 +386,7 @@ let selectedType = 'note';
 let expandedId = null;
 let editingId = null;
 let ghEditMode = false;
+let inboxEditMode = false;
 let linkMode = false;
 let connFilter = 'all'; // 'all' | 'conn' | 'noconn'
 let archiveFilter = 'active'; // 'active' | 'archived'
@@ -457,7 +460,7 @@ async function loadFromFile() {
     }
     window._kbDigest = loaded.find(i => i.id === '_digest') || null;
     items = loaded.filter(i => i.id !== '_digest');
-    // Read INBOX.md from root
+    // Read INBOX.md
     try {
       const inboxHandle = await dirHandle.getFileHandle('INBOX.md');
       const inboxFile = await inboxHandle.getFile();
@@ -1157,7 +1160,39 @@ function renderPrioritiesCard(item) {
 function renderInboxCard() {
   const text = window._kbInbox;
   if (!text || !text.trim()) return '';
-  return `<div class="digest-card inbox-card"><h2>Inbox</h2>${md(text)}</div>`;
+  return `<div class="digest-card inbox-card" onclick="editInbox(event)"><h2>Inbox</h2>${md(text)}</div>`;
+}
+function editInbox(e) {
+  e.stopPropagation();
+  if (readOnly) return;
+  inboxEditMode = true;
+  editingId = null;
+  const f = document.getElementById('add-form');
+  f.classList.add('inbox-edit');
+  f.style.display = '';
+  document.getElementById('btn-add-toggle').textContent = '× Cancel';
+  document.getElementById('f-content').value = window._kbInbox || '';
+  document.getElementById('f-content').focus();
+  showFormEditButtons(false);
+  f.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+async function saveInbox() {
+  const content = document.getElementById('f-content').value;
+  window._kbInbox = content;
+  if (dirHandle) {
+    try {
+      const fh = await dirHandle.getFileHandle('INBOX.md', {create: true});
+      const w = await fh.createWritable();
+      await w.write(content);
+      await w.close();
+    } catch(e) { showToast('Save error: '+e.message); }
+  }
+  inboxEditMode = false;
+  document.getElementById('f-content').value = '';
+  const f = document.getElementById('add-form'); f.classList.remove('inbox-edit'); f.style.display = 'none';
+  document.getElementById('btn-add-toggle').textContent = '+ Add';
+  renderList();
+  showToast('Inbox updated');
 }
 function toggleHighlightInput() {
   const wrap = document.getElementById('highlight-input-wrap');
@@ -1274,8 +1309,8 @@ function toggleForm(){
   f.style.display=open?'':'none';
   if(open && window._taHeight) ta.style.height=window._taHeight;
   document.getElementById('btn-add-toggle').textContent=open?'× Cancel':'+ Add';
-  if(open){editingId=null;ghEditMode=false;f.classList.remove('gh-edit');buildTypePicker();document.getElementById('f-connection').checked=false;document.getElementById('f-archived').checked=false;document.getElementById('f-due').value='';document.getElementById('f-content').focus();showFormEditButtons(false);}
-  else{editingId=null;ghEditMode=false;f.classList.remove('gh-edit');['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-connection').checked=false;document.getElementById('f-archived').checked=false;document.getElementById('f-due').value='';showFormEditButtons(false);}
+  if(open){editingId=null;ghEditMode=false;inboxEditMode=false;f.classList.remove('gh-edit','inbox-edit');buildTypePicker();document.getElementById('f-connection').checked=false;document.getElementById('f-archived').checked=false;document.getElementById('f-due').value='';document.getElementById('f-content').focus();showFormEditButtons(false);}
+  else{editingId=null;ghEditMode=false;inboxEditMode=false;f.classList.remove('gh-edit','inbox-edit');['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-connection').checked=false;document.getElementById('f-archived').checked=false;document.getElementById('f-due').value='';showFormEditButtons(false);}
 }
 
 function showFormEditButtons(show, item) {
@@ -1311,7 +1346,8 @@ async function deleteEditingItem() {
 function cancelEdit() {
   editingId = null;
   ghEditMode = false;
-  const f=document.getElementById('add-form'); f.classList.remove('gh-edit'); f.style.display = 'none';
+  inboxEditMode = false;
+  const f=document.getElementById('add-form'); f.classList.remove('gh-edit','inbox-edit'); f.style.display = 'none';
   document.getElementById('btn-add-toggle').textContent = '+ Add';
   ['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-connection').checked=false;
@@ -1330,6 +1366,7 @@ function buildTypePicker(){
 function selType(k){selectedType=k;buildTypePicker();}
 
 async function saveItem(){
+  if (inboxEditMode) { await saveInbox(); return; }
   const content=document.getElementById('f-content').value;
   if(!ghEditMode && !content.trim()){showToast('Content is required');return;}
   const genes=document.getElementById('f-genes').value.split(/[\s,]+/).map(g=>g.trim()).filter(Boolean);
@@ -1366,11 +1403,12 @@ async function saveItem(){
   const savedItem = wasEdit ? items.find(i=>i.id===editingId) : items[items.length - 1];
   editingId = null;
   ghEditMode = false;
+  inboxEditMode = false;
   await saveEntryToFile(savedItem);
   ['f-content','f-title','f-genes','f-tags','f-source'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-due').value='';
   document.getElementById('f-archived').checked=false;
-  const ff=document.getElementById('add-form'); ff.classList.remove('gh-edit'); ff.style.display='none';
+  const ff=document.getElementById('add-form'); ff.classList.remove('gh-edit','inbox-edit'); ff.style.display='none';
   document.getElementById('btn-add-toggle').textContent='+ Add';
   exitLinkMode();
   computeSortTags(); renderFilters(); renderList();
@@ -2050,9 +2088,10 @@ async function ghLoadEntries() {
 
     if (cachedSha === currentSha) {
       const cached = await idbGet('gh_entries');
-      if (cached) {
+      const cachedInbox = await idbGet('gh_inbox');
+      if (cached && cachedInbox !== undefined) {
         window._kbDigest = cached.find(i => i.id === '_digest') || null;
-        window._kbInbox = await idbGet('gh_inbox') || '';
+        window._kbInbox = cachedInbox || '';
         items = cached.filter(i => i.id !== '_digest');
         ghRepoMode = true;
         computeSortTags(); renderFilters(); renderList();
@@ -2065,7 +2104,7 @@ async function ghLoadEntries() {
     // Fetch directory listing and INBOX.md in parallel
     const [listResp, inboxResp] = await Promise.all([
       fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_ENTRIES_PATH}`, { headers: ghHeaders() }),
-      fetch(`https://api.github.com/repos/${GH_REPO}/contents/INBOX.md`, { headers: {...ghHeaders(), 'Accept': 'application/vnd.github.raw'} }).catch(() => null),
+      fetch(`https://api.github.com/repos/${GH_REPO}/contents/knowledge-base/INBOX.md`, { headers: {...ghHeaders(), 'Accept': 'application/vnd.github.raw'} }).catch(() => null),
     ]);
     if (!listResp.ok) throw new Error(`GitHub API ${listResp.status}: ${listResp.statusText}`);
     const files = await listResp.json();
