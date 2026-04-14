@@ -1,15 +1,17 @@
 {
-  "id": "mnrhza9u5pqp",
+  "id": "mnvuz96l8s20",
   "type": "note",
-  "title": "Ideogram plot with new data",
+  "title": "Phasic todo",
   "genes": [],
-  "tags": [],
+  "tags": [
+    "Phasic"
+  ],
   "source": "",
   "connection": false,
   "archived": false,
   "due": "",
-  "date": "2026-04-13T08:40:45.150Z",
+  "date": "2026-04-13T07:14:26.896Z",
   "synced": false,
-  "_sortTag": "",
+  "_sortTag": "Phasic",
   "pinned": false
 }

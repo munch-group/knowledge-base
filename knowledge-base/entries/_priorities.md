@@ -1,14 +1,14 @@
-Website
-Time Machine on laptop and for office
+## Today todo
+- Email/admin back on track.  
+- Drive: VEP workflow.  
+- Ideogram plot with new data
 
 ## Week work
-- Time Machine on laptop and for office
-- Move applications to separate repos planned as manuscripts
+- Time Machine on office machine
 - Registration/Hotel in Amsterdam
 - Oxford trip
-- Admin back on track.  
-- Drive: VEP workflow.  
-- Phasic: PSMC model, BFFG.  
+- Phasic code and test review
+- PSMC/BFFG/Ghost model
 
 ## Month tactic
 - Drive: Protein LoF with Leipzig, Primate LinARs, X/Y DEG.  
