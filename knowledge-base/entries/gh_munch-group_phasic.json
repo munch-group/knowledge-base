@@ -7,7 +7,7 @@
   ],
   "genes": [],
   "source": "https://github.com/munch-group/phasic",
-  "date": "2026-04-14T09:01:23Z",
+  "date": "2026-04-14T09:32:28Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/phasic",
@@ -20,6 +20,11 @@
   "archived": false,
   "due": "",
   "_ghCommits": [
+    {
+      "sha": "523970f",
+      "msg": "docs update",
+      "date": "2026-04-14T09:27:13Z"
+    },
     {
       "sha": "5fbdfbd",
       "msg": "Added images for later inclusion in mathref",
@@ -64,11 +69,6 @@
       "sha": "96d5b36",
       "msg": "Refactor documentation: Enhance clarity and structure in graph builder and Van Loan equivalence sections; add references section with comprehensive bibliography",
       "date": "2026-04-12T17:09:02Z"
-    },
-    {
-      "sha": "89bbde9",
-      "msg": "Merge branch 'dynamic-min-degree-ordering'",
-      "date": "2026-04-12T14:01:45Z"
     }
   ],
   "_ghIssuesRecent": [

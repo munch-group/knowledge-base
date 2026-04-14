@@ -4,8 +4,8 @@ A single-file browser app for managing a local JSON knowledge base with Claude m
 
 ## Getting started
 
-1. Open `knowledge-base.html` in **Google Chrome** or **Microsoft Edge** (other browsers don't support the File System Access API).
-2. Click **Connect file** and select your `knowledge-base.json` file (or create a new empty JSON file containing `[]`).
+1. Open `memento.html` in **Google Chrome** or **Microsoft Edge** (other browsers don't support the File System Access API).
+2. Click **Connect folder** and select your `knowledge-base/` directory (entries are stored as individual files in `entries/`).
 3. The app remembers your file handle between sessions via IndexedDB, so next time it will reconnect automatically.
 
 ## Card types
@@ -171,63 +171,69 @@ Three sync actions:
 
 ## File format
 
-The JSON file is a flat array of entry objects:
+Each entry is stored as a pair of files in `knowledge-base/entries/`:
+
+- `{id}.json` — metadata (all fields except content)
+- `{id}.md` — the content body (Markdown)
+
+Example `{id}.json`:
 
 ```json
-[
-  {
-    "id": "unique-id",
-    "type": "fact",
-    "title": "Entry title",
-    "content": "Markdown content...",
-    "tags": ["tag1", "tag2"],
-    "genes": ["MAPT", "HDAC6"],
-    "source": "https://example.com",
-    "date": "2026-03-28T12:00:00.000Z",
-    "synced": true,
-    "connection": false,
-    "archived": false,
-    "due": "2026-04-10"
-  }
-]
+{
+  "id": "unique-id",
+  "type": "fact",
+  "title": "Entry title",
+  "tags": ["tag1", "tag2"],
+  "genes": ["MAPT", "HDAC6"],
+  "source": "https://example.com",
+  "date": "2026-03-28T12:00:00.000Z",
+  "synced": true,
+  "connection": false,
+  "archived": false,
+  "due": "2026-04-10"
+}
 ```
+
+The companion `{id}.md` contains the Markdown content. For `_digest` entries, the `.md` file contains the digest markdown.
+
+A legacy single-file format (`knowledge-base.json`, a flat JSON array) is also present but no longer used by the CLI tools.
 
 Valid types: `fact`, `reference`, `observation`, `hypothesis`, `idea`, `note`, `people`, `github`.
 
 ## Command-line tool (kb-manage.py)
 
-`kb-manage.py` is a Python CLI for batch operations on knowledge-base JSON files. It requires the `click` library (`pip install click`).
+`kb-manage.py` is a Python CLI for batch operations on the knowledge base. It operates on the knowledge-base directory (not a single JSON file). Requires the `click` library (`pip install click`).
 
 ```
-python3 kb-manage.py COMMAND [ARGS] [OPTIONS]
+python3 kb-manage.py COMMAND KB_DIR [ARGS] [OPTIONS]
 ```
 
 ### Tags
 
 ```bash
-kb-manage.py list-tags data.json                        # list all tags with counts
-kb-manage.py list-tags data.json --sort name             # sort alphabetically
-kb-manage.py rename-tag data.json "old-name" "new-name"  # rename across all entries
-kb-manage.py delete-tag data.json "unwanted"             # remove from all entries
-kb-manage.py add-tag data.json "new-tag"                 # add to all entries
-kb-manage.py add-tag data.json "reviewed" --where-type fact   # add only to facts
-kb-manage.py add-tag data.json "tau" --where-gene MAPT        # add where gene matches
+kb-manage.py list-tags knowledge-base/                        # list all tags with counts
+kb-manage.py list-tags knowledge-base/ --sort name             # sort alphabetically
+kb-manage.py rename-tag knowledge-base/ "old-name" "new-name"  # rename across all entries
+kb-manage.py delete-tag knowledge-base/ "unwanted"             # remove from all entries
+kb-manage.py add-tag knowledge-base/ "new-tag"                 # add to all entries
+kb-manage.py add-tag knowledge-base/ "reviewed" --where-type fact   # add only to facts
+kb-manage.py add-tag knowledge-base/ "tau" --where-gene MAPT        # add where gene matches
 ```
 
 ### Genes
 
 ```bash
-kb-manage.py list-genes data.json                        # list all genes with counts
-kb-manage.py rename-gene data.json "HDAC6" "HDAC6A"     # rename (case-insensitive match)
-kb-manage.py delete-gene data.json "BRCA1"               # remove from all entries
+kb-manage.py list-genes knowledge-base/                        # list all genes with counts
+kb-manage.py rename-gene knowledge-base/ "HDAC6" "HDAC6A"     # rename (case-insensitive match)
+kb-manage.py delete-gene knowledge-base/ "BRCA1"               # remove from all entries
 ```
 
 ### Types
 
 ```bash
-kb-manage.py list-types data.json                        # list types with counts
-kb-manage.py rename-type data.json "quote" "quote_para"  # rename a type
-kb-manage.py set-type data.json hypothesis --where-tag speculative  # bulk change type
+kb-manage.py list-types knowledge-base/                        # list types with counts
+kb-manage.py rename-type knowledge-base/ "quote" "quote_para"  # rename a type
+kb-manage.py set-type knowledge-base/ hypothesis --where-tag speculative  # bulk change type
 ```
 
 ### Removing entries
@@ -235,52 +241,52 @@ kb-manage.py set-type data.json hypothesis --where-tag speculative  # bulk chang
 All removal commands support `--dry-run` to preview without modifying the file.
 
 ```bash
-kb-manage.py remove-by-tag data.json "deprecated" --dry-run  # preview
-kb-manage.py remove-by-tag data.json "deprecated"            # remove for real
-kb-manage.py remove-by-type data.json "person"               # remove all of a type
-kb-manage.py remove-by-id data.json abc123 def456            # remove specific entries
+kb-manage.py remove-by-tag knowledge-base/ "deprecated" --dry-run  # preview
+kb-manage.py remove-by-tag knowledge-base/ "deprecated"            # remove for real
+kb-manage.py remove-by-type knowledge-base/ "person"               # remove all of a type
+kb-manage.py remove-by-id knowledge-base/ abc123 def456            # remove specific entries
 ```
 
 ### Search and replace
 
 ```bash
-kb-manage.py grep data.json "MAPT" -i                    # search (case-insensitive)
-kb-manage.py grep data.json "tau" --field content         # search specific field
-kb-manage.py replace data.json "BDMI" "BDM incompatibility"          # literal replace
-kb-manage.py replace data.json "chr(\d+)" "chromosome \1" --regex    # regex replace
-kb-manage.py replace data.json "old text" "new text" --dry-run       # preview changes
+kb-manage.py grep knowledge-base/ "MAPT" -i                    # search (case-insensitive)
+kb-manage.py grep knowledge-base/ "tau" --field content         # search specific field
+kb-manage.py replace knowledge-base/ "BDMI" "BDM incompatibility"          # literal replace
+kb-manage.py replace knowledge-base/ "chr(\d+)" "chromosome \1" --regex    # regex replace
+kb-manage.py replace knowledge-base/ "old text" "new text" --dry-run       # preview changes
 ```
 
-### Merging and importing files
+### Merging and importing
 
 ```bash
-kb-manage.py merge target.json source.json               # merge by ID (skip duplicates)
-kb-manage.py merge target.json source.json --overwrite   # merge (overwrite duplicates)
-kb-manage.py import target.json source.json              # append all (new IDs assigned)
+kb-manage.py merge knowledge-base/ source-kb/               # merge by ID (skip duplicates)
+kb-manage.py merge knowledge-base/ source-kb/ --overwrite   # merge (overwrite duplicates)
+kb-manage.py import knowledge-base/ source-kb/              # append all (new IDs assigned)
 ```
 
 ### Bulk operations
 
 ```bash
-kb-manage.py set-synced data.json false                  # mark all as unsynced
-kb-manage.py set-synced data.json true --where-tag reviewed  # mark filtered as synced
-kb-manage.py touch data.json                             # update all dates to now
-kb-manage.py touch data.json --where-tag active          # touch filtered entries
+kb-manage.py set-synced knowledge-base/ false                  # mark all as unsynced
+kb-manage.py set-synced knowledge-base/ true --where-tag reviewed  # mark filtered as synced
+kb-manage.py touch knowledge-base/                             # update all dates to now
+kb-manage.py touch knowledge-base/ --where-tag active          # touch filtered entries
 ```
 
 ### Quality and diagnostics
 
 ```bash
-kb-manage.py stats data.json       # summary: counts, types, tags, genes, content lengths
-kb-manage.py validate data.json    # check for missing fields and unknown types
-kb-manage.py clean data.json       # normalize: add missing fields, trim whitespace, dedup tags
-kb-manage.py dedup data.json       # remove duplicates by title
-kb-manage.py dedup data.json --by content --dry-run  # preview content-based dedup
+kb-manage.py stats knowledge-base/       # summary: counts, types, tags, genes, content lengths
+kb-manage.py validate knowledge-base/    # check for missing fields and unknown types
+kb-manage.py clean knowledge-base/       # normalize: add missing fields, trim whitespace, dedup tags
+kb-manage.py dedup knowledge-base/       # remove duplicates by title
+kb-manage.py dedup knowledge-base/ --by content --dry-run  # preview content-based dedup
 ```
 
 ## Morning digest (kb-sync-and-digest.py)
 
-`kb-sync-and-digest.py` fetches fresh GitHub activity (commits, issues) for all synced repos and generates a natural language "Where am I" digest using the Claude API. The digest is printed to the terminal and saved to the JSON as a `_digest` entry, viewable in the web app via the "Where am I" toggle.
+`kb-sync-and-digest.py` fetches fresh GitHub activity (commits, issues) for all synced repos and generates a natural language "Where am I" digest using the Claude API. The digest is printed to the terminal and saved as a `_digest` entry in `entries/`, viewable in the web app via the "Where am I" toggle.
 
 ### Prerequisites
 
@@ -296,13 +302,13 @@ Two environment variables are required:
 pixi run digest
 
 # Only activity from the last 7 days
-pixi run python kb-sync-and-digest.py knowledge-base/knowledge-base.json --days 7
+pixi run python kb-sync-and-digest.py knowledge-base/ --days 7
 
 # Sync GitHub data without generating a digest
-pixi run python kb-sync-and-digest.py knowledge-base/knowledge-base.json --sync-only
+pixi run python kb-sync-and-digest.py knowledge-base/ --sync-only
 
 # Use a different Claude model
-pixi run python kb-sync-and-digest.py knowledge-base/knowledge-base.json --model claude-haiku-4-5-20251001
+pixi run python kb-sync-and-digest.py knowledge-base/ --model claude-haiku-4-5-20251001
 ```
 
 ### Daily cron job
@@ -314,13 +320,34 @@ crontab -e
 ```
 
 ```cron
-0 7 * * * GITHUB_TOKEN=ghp_... ANTHROPIC_API_KEY=sk-ant-... cd /Users/kmt/knowledge-base && /Users/kmt/knowledge-base/.pixi/envs/default/bin/python kb-sync-and-digest.py knowledge-base/knowledge-base.json --days 30 >> /tmp/kb-digest.log 2>&1
+0 7 * * * GITHUB_TOKEN=ghp_... ANTHROPIC_API_KEY=sk-ant-... cd /Users/kmt/memento && /Users/kmt/memento/.pixi/envs/default/bin/python kb-sync-and-digest.py knowledge-base/ --days 30 >> /tmp/kb-digest.log 2>&1
 ```
 
 Replace `ghp_...` and `sk-ant-...` with your actual tokens. The digest will be available in the web app next time you open it.
 
+## Digest only (kb-digest.py)
+
+`kb-digest.py` generates a digest from existing GitHub activity data without re-syncing from GitHub. Useful when data has already been synced and you just want a fresh summary.
+
+### Prerequisites
+
+- `ANTHROPIC_API_KEY` — an Anthropic API key
+
+### Usage
+
+```bash
+# Generate digest from existing data
+pixi run python kb-digest.py knowledge-base/
+
+# Only activity from the last 14 days
+pixi run python kb-digest.py knowledge-base/ --days 14
+
+# Use a different Claude model
+pixi run python kb-digest.py knowledge-base/ --model claude-haiku-4-5-20251001
+```
+
 ## Requirements
 
 - Google Chrome or Microsoft Edge (File System Access API required)
-- `kb-manage.py` requires Python 3 and `click` (`pip install click`)
-- `kb-sync-and-digest.py` requires Python 3, `click`, and `anthropic` (install via `pixi install`)
+- `kb-manage.py` requires Python 3 and `click`
+- `kb-sync-and-digest.py` and `kb-digest.py` require Python 3, `click`, and `anthropic` (install via `pixi install`)
