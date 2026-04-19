@@ -1160,8 +1160,13 @@ function renderPrioritiesCard(item) {
 }
 function renderInboxCard() {
   const text = window._kbInbox;
-  if (!text || !text.trim()) return '';
-  return `<div class="digest-card inbox-card" onclick="editInbox(event)"><h2>Inbox</h2>${md(text)}</div>`;
+  const hasText = text && text.trim();
+  if (!hasText && !readOnly) return '';
+  const title = readOnly
+    ? `<h2><a href="https://github.com/munch-group/memento/blob/06d86b94227afc23ac88e1e95da5a3e1a7b52db0/knowledge-base/INBOX.md" target="_blank" rel="noopener" onclick="event.stopPropagation()">Inbox</a></h2>`
+    : `<h2>Inbox</h2>`;
+  const body = hasText ? md(text) : '';
+  return `<div class="digest-card inbox-card" onclick="editInbox(event)">${title}${body}</div>`;
 }
 function editInbox(e) {
   e.stopPropagation();
