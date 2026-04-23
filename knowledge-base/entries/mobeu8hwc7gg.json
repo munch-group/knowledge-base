@@ -1,7 +1,7 @@
 {
   "id": "mobeu8hwc7gg",
-  "type": "fact",
-  "title": "Recent selection on",
+  "type": "note",
+  "title": "Recent selection on KANSL1 copy nr on MAPT haplotypes",
   "genes": [
     "KANSL1",
     "MAPT"
@@ -11,6 +11,7 @@
   "connection": true,
   "archived": false,
   "due": "",
-  "date": "2026-04-23T11:40:39.427Z",
-  "synced": false
+  "date": "2026-04-23T13:43:35.244Z",
+  "synced": false,
+  "_sortTag": ""
 }
