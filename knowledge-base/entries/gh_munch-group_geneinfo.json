@@ -17,54 +17,54 @@
   "_sortTag": "",
   "_ghCommits": [
     {
-      "sha": "bd4a88e",
+      "sha": "01dfedd",
+      "msg": "notebook with new UI",
+      "date": "2026-04-22T21:02:40Z"
+    },
+    {
+      "sha": "2bd7f16",
+      "msg": "widget: performance and long-function extractions",
+      "date": "2026-04-22T20:40:31Z"
+    },
+    {
+      "sha": "59c40d8",
+      "msg": "widget: accessibility + help popover",
+      "date": "2026-04-22T20:21:34Z"
+    },
+    {
+      "sha": "c5a66ae",
+      "msg": "widget: UI silent-failure fixes",
+      "date": "2026-04-22T20:14:26Z"
+    },
+    {
+      "sha": "694abf1",
+      "msg": "widget: resource management",
+      "date": "2026-04-22T20:09:13Z"
+    },
+    {
+      "sha": "6b47444",
+      "msg": "widget: trait validators + theme validator merge",
+      "date": "2026-04-22T20:01:25Z"
+    },
+    {
+      "sha": "c4dfb50",
+      "msg": "widget: API renames + missing removal methods",
+      "date": "2026-04-22T19:55:21Z"
+    },
+    {
+      "sha": "87b3d71",
       "msg": "update",
-      "date": "2026-04-21T07:45:55Z"
+      "date": "2026-04-22T14:08:45Z"
     },
     {
-      "sha": "0a8137d",
-      "msg": "Added with-track heatmap coloring by variable",
-      "date": "2026-04-21T06:26:28Z"
-    },
-    {
-      "sha": "c8d3014",
+      "sha": "2dc76ff",
       "msg": "update",
-      "date": "2026-04-20T20:46:21Z"
+      "date": "2026-04-22T13:35:13Z"
     },
     {
-      "sha": "11e1d65",
-      "msg": "update",
-      "date": "2026-04-20T20:30:42Z"
-    },
-    {
-      "sha": "19a1b7e",
-      "msg": "update",
-      "date": "2026-04-20T20:16:49Z"
-    },
-    {
-      "sha": "4e28c91",
-      "msg": "update",
-      "date": "2026-04-20T20:06:30Z"
-    },
-    {
-      "sha": "8403090",
-      "msg": "update",
-      "date": "2026-04-20T18:10:04Z"
-    },
-    {
-      "sha": "1989972",
-      "msg": "update",
-      "date": "2026-04-20T18:06:30Z"
-    },
-    {
-      "sha": "98969d9",
-      "msg": "update",
-      "date": "2026-04-20T15:32:05Z"
-    },
-    {
-      "sha": "d084e9a",
-      "msg": "Added better gene seperation in gene track",
-      "date": "2026-04-20T15:09:50Z"
+      "sha": "ba73761",
+      "msg": "patch  version bump",
+      "date": "2026-04-22T10:39:39Z"
     }
   ],
   "_ghIssuesRecent": [

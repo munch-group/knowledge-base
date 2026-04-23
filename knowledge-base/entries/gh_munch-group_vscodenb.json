@@ -5,7 +5,7 @@
   "tags": [],
   "genes": [],
   "source": "https://github.com/munch-group/vscodenb",
-  "date": "2026-04-13T16:09:02Z",
+  "date": "2026-04-22T11:15:25Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/vscodenb",
@@ -16,6 +16,21 @@
   "_ghPrivate": false,
   "_sortTag": "",
   "_ghCommits": [
+    {
+      "sha": "8c47cf7",
+      "msg": "patch  version bump",
+      "date": "2026-04-22T11:13:18Z"
+    },
+    {
+      "sha": "9b937c8",
+      "msg": "patch  version bump",
+      "date": "2026-04-22T11:13:14Z"
+    },
+    {
+      "sha": "2fb1eba",
+      "msg": "update",
+      "date": "2026-04-22T11:12:53Z"
+    },
     {
       "sha": "20dc1b5",
       "msg": "patch  version bump",
@@ -50,24 +65,18 @@
       "sha": "4c6baaf",
       "msg": "update",
       "date": "2026-04-11T10:23:39Z"
-    },
-    {
-      "sha": "ab86c0e",
-      "msg": "patch  version bump",
-      "date": "2026-04-07T11:27:28Z"
-    },
-    {
-      "sha": "738ea22",
-      "msg": "patch  version bump",
-      "date": "2026-04-07T11:20:45Z"
-    },
-    {
-      "sha": "7864309",
-      "msg": "patch  version bump",
-      "date": "2026-04-07T11:20:40Z"
     }
   ],
-  "_ghIssuesRecent": [],
+  "_ghIssuesRecent": [
+    {
+      "number": 1,
+      "title": "vscodenb should detect and set the default background color rather than inferring it from the two themes hardcoded in",
+      "state": "open",
+      "date": "2026-04-22T11:15:25Z",
+      "labels": [],
+      "url": "https://github.com/munch-group/vscodenb/issues/1"
+    }
+  ],
   "_ghDigest": {
     "markdown": "**vscodenb**  \nMultiple patch version bumps over the past week, with the most recent activity two days ago and several bumps on April 11th and 7th, suggesting active development or bug fixes for the VSCode theme-sensitive plotting library.",
     "fingerprint": "7bc9843332bc0728beb7934b71141419420b657f",

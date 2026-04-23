@@ -6,23 +6,19 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
 
-DIGEST_SCHEMA_VERSION = 1
+DIGEST_SCHEMA_VERSION = 2
 
 
 SYSTEM_PROMPT = """\
 You are a research assistant helping a scientist stay on top of one of their GitHub projects. \
-Given recent activity for a single repository, write a short briefing entry. \
-Scale detail inversely with recency: \
-a repo touched today or yesterday needs only a one-liner (the work is fresh in memory). \
-A repo untouched for a week or more needs the most context: what was the last thing done, \
-what is pending, what needs attention, enough to jog memory. \
-A repo in between gets moderate detail. \
+Given recent activity for a single repository, write a short briefing entry summarizing what the work is about and where it stands. \
 Be specific - mention commit messages, issue titles. \
 Issue labels like "bug", "enhancement", "documentation" indicate the issue type. \
 Use this to characterize work (e.g. "2 open bugs", "a feature request for X"). \
 Format as markdown. Output exactly the bolded project name on its own line with two trailing spaces, \
 then the summary prose on the next line (no blank line between them). Do not output anything else. \
-Express all dates as relative time in prose (e.g. "two days ago", "about a month ago"), never as absolute dates or abbreviated parenthetical timestamps. \
+Do NOT mention when anything happened. Do not use absolute dates, relative time phrases ("today", "yesterday", "last week", "two days ago", "about a month ago", "8 months ago", "recently", "recent"), or any other reference to modification times. \
+The recency of the work is conveyed separately and must not appear in your prose. Describe only what the work is and its current state. \
 Do not use long dashes (em dashes). Use periods or commas instead."""
 
 
@@ -50,7 +46,8 @@ def filter_card_activity(card, days=None):
 
 
 def build_activity_for_card(card, commits, issues):
-    """Render the activity block for a single card (same format as the original monolithic prompt)."""
+    """Render the activity block for a single card. Dates are omitted: the digest prose
+    must not reference recency (bucketing is done at assembly time from mtimes)."""
     lines = [f"### {card.get('title', card.get('_ghFullName', '?'))}"]
     lines.append(f"URL: {card.get('source', '')}")
     if card.get("content"):
@@ -59,7 +56,7 @@ def build_activity_for_card(card, commits, issues):
     if commits:
         lines.append("\nRecent commits:")
         for c in commits:
-            lines.append(f"  - [{c['sha']}] {c['msg']} ({fmt_date(c['date'])})")
+            lines.append(f"  - [{c['sha']}] {c['msg']}")
 
     open_issues = [i for i in issues if i.get("state") == "open"]
     closed_issues = [i for i in issues if i.get("state") == "closed"]
@@ -69,14 +66,14 @@ def build_activity_for_card(card, commits, issues):
         for i in closed_issues:
             labels = ", ".join(i.get("labels", []))
             label_str = f" [{labels}]" if labels else ""
-            lines.append(f"  - #{i['number']} {i['title']}{label_str} ({fmt_date(i['date'])})")
+            lines.append(f"  - #{i['number']} {i['title']}{label_str}")
 
     if open_issues:
         lines.append("\nOpen issues:")
         for i in open_issues:
             labels = ", ".join(i.get("labels", []))
             label_str = f" [{labels}]" if labels else ""
-            lines.append(f"  - #{i['number']} {i['title']}{label_str} ({fmt_date(i['date'])})")
+            lines.append(f"  - #{i['number']} {i['title']}{label_str}")
 
     return "\n".join(lines)
 
@@ -166,10 +163,13 @@ def refresh_digests(cards, client, model, days=None, max_workers=5, log=None):
                     log(f"  summarized {done}/{len(stale)}…")
 
     blocks = []
-    for card, _commits, _issues, _fp, _needs in active:
+    for card, commits, issues, _fp, _needs in active:
         digest = card.get("_ghDigest") or {}
         md = digest.get("markdown") or _placeholder(card)
-        blocks.append(md)
+        blocks.append({
+            "markdown": md,
+            "mtime": card_mtime(card, commits, issues),
+        })
 
     stats = {
         "active": len(active),
@@ -179,5 +179,65 @@ def refresh_digests(cards, client, model, days=None, max_workers=5, log=None):
     return blocks, stats
 
 
-def assemble_markdown(blocks):
-    return "\n\n".join(b.strip() for b in blocks if b and b.strip())
+BUCKETS = [
+    ("Past week", 7),
+    ("Past month", 30),
+    ("Past quarter", 90),
+    ("Past year", 365),
+    ("Older", None),
+]
+
+
+def card_mtime(card, commits, issues):
+    """Latest ISO-8601 timestamp across commits, issues, and the card's own `date` field."""
+    candidates = [c.get("date", "") for c in commits]
+    candidates += [i.get("date", "") for i in issues]
+    candidates.append(card.get("date", "") or "")
+    return max((d for d in candidates if d), default="")
+
+
+def _bucket_for(mtime_iso, now=None):
+    if not mtime_iso:
+        return "Older"
+    now = now or datetime.now(timezone.utc)
+    try:
+        mt = datetime.fromisoformat(mtime_iso.replace("Z", "+00:00"))
+    except ValueError:
+        return "Older"
+    if mt.tzinfo is None:
+        mt = mt.replace(tzinfo=timezone.utc)
+    age_days = (now - mt).total_seconds() / 86400.0
+    for name, limit in BUCKETS:
+        if limit is None or age_days <= limit:
+            return name
+    return "Older"
+
+
+def assemble_markdown(blocks, now=None):
+    """Group per-repo digest entries under recency section headings.
+
+    `blocks` is a list of {"markdown": str, "mtime": iso str} dicts. Sections appear in the
+    order defined by BUCKETS; empty sections are omitted. Within a section, newer repos come first.
+    """
+    if not blocks:
+        return ""
+    # Backward-compat: allow raw markdown strings (ungrouped).
+    if isinstance(blocks[0], str):
+        return "\n\n".join(b.strip() for b in blocks if b and b.strip())
+
+    grouped = {name: [] for name, _ in BUCKETS}
+    for b in blocks:
+        md = (b.get("markdown") or "").strip()
+        if not md:
+            continue
+        grouped[_bucket_for(b.get("mtime", ""), now=now)].append((b.get("mtime", ""), md))
+
+    out = []
+    for name, _ in BUCKETS:
+        entries = grouped[name]
+        if not entries:
+            continue
+        entries.sort(key=lambda x: x[0], reverse=True)
+        out.append(f"### {name}")
+        out.extend(md for _, md in entries)
+    return "\n\n".join(out)

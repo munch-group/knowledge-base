@@ -16,12 +16,6 @@ Updated today with a generic commit message, suggesting minor changes or mainten
 **collective-student-grading**  
 Added notebook two months ago - this appears to be the most recent activity on the repository, suggesting it may be in a stable state or awaiting further development.
 
-**interaction-store**  
-Updated yesterday with a brief commit message, suggesting minor maintenance or tweaks to this gene interaction exploration tool that integrates Claude Code and INDRA.
-
-**slurm-code**  
-Recent flurry of activity yesterday with multiple patch version bumps and an important fix to prevent environment variable conflicts by adding VS_ prefixes to avoid interference with srun and sbatch commands.
-
 **h2chrY**  
 The repository has been quiet for about 8 months, with only one test issue (#1) created back in April that remains open. This project focuses on estimating heritability while treating chromosome Y effects as nuisance parameters. No recent development activity suggests the project may be in early stages or on hold, with the test issue likely serving as a placeholder for future development work.
 
@@ -45,12 +39,6 @@ Initial repository setup with first commit made about 8 months ago. This appears
 
 **geneinfo**  
 Very active development yesterday and today with multiple commits, including adding better gene separation in gene track functionality and new heatmap coloring features by variable.
-
-**status-monitor-vscode**  
-Very active today with multiple commits including version bumps to 0.1.0, README updates, icon addition, and changes to use VS_* prefixed environment variables for better integration.
-
-**munch-group-library**  
-Updated pyproject.toml about four months ago - this Python library template hasn't seen recent activity and may need attention to stay current with evolving Python packaging standards and dependencies.
 
 **bioinformatics**  
 Updated 4 months ago with a simple "update" commit, but without more context it's unclear what specific changes were made to these bioinformatics and programming lecture notes.
