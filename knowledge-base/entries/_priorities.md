@@ -7,6 +7,7 @@
 - Time Machine on office machine
 - Registration/Hotel in Amsterdam
 - Oxford trip
+- Organize how data produced by different projects/repos are stored for use in other projects (maybe deep links to git-lfs)
 - Phasic code and test review
 - PSMC/BFFG/Ghost model
 
