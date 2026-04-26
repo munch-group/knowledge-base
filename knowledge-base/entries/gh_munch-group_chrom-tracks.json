@@ -1,0 +1,26 @@
+{
+  "id": "gh_munch-group_chrom-tracks",
+  "type": "github",
+  "title": "chrom-tracks",
+  "tags": [],
+  "genes": [],
+  "source": "https://github.com/munch-group/chrom-tracks",
+  "date": "2026-04-16T08:49:28Z",
+  "synced": false,
+  "connection": false,
+  "_ghFullName": "munch-group/chrom-tracks",
+  "_ghStars": 0,
+  "_ghForks": 0,
+  "_ghLang": "Shell",
+  "_ghOpenIssues": 0,
+  "_ghPrivate": false,
+  "_sortTag": "",
+  "_ghCommits": [
+    {
+      "sha": "77ab1dd",
+      "msg": "Initial commit",
+      "date": "2026-04-16T08:49:28Z"
+    }
+  ],
+  "_ghIssuesRecent": []
+}

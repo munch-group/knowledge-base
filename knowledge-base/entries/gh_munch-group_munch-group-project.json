@@ -5,7 +5,7 @@
   "tags": [],
   "genes": [],
   "source": "https://github.com/munch-group/munch-group-project",
-  "date": "2026-03-13T18:16:23Z",
+  "date": "2026-04-23T10:49:52Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/munch-group-project",
@@ -16,6 +16,11 @@
   "_ghPrivate": false,
   "_sortTag": "",
   "_ghCommits": [
+    {
+      "sha": "1ebe7f4",
+      "msg": "Added GWF ref doc for Claude",
+      "date": "2026-04-23T10:23:21Z"
+    },
     {
       "sha": "031100a",
       "msg": "Update README.md",
@@ -60,11 +65,6 @@
       "sha": "9d38c06",
       "msg": "Clean up README by removing command and badge",
       "date": "2025-12-15T07:56:59Z"
-    },
-    {
-      "sha": "37081bb",
-      "msg": "Update upstream repository URL in README",
-      "date": "2025-12-15T07:54:48Z"
     }
   ],
   "_ghIssuesRecent": []

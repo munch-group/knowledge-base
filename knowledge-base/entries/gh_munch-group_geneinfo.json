@@ -5,7 +5,7 @@
   "tags": [],
   "genes": [],
   "source": "https://github.com/munch-group/geneinfo",
-  "date": "2026-03-23T11:28:53Z",
+  "date": "2026-04-22T21:05:20Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/geneinfo",
@@ -147,6 +147,30 @@
       "date": "2024-07-30T08:08:34Z",
       "labels": [],
       "url": "https://github.com/munch-group/geneinfo/issues/5"
+    },
+    {
+      "number": 1,
+      "title": "clear_cache method",
+      "state": "open",
+      "date": "2024-03-05T07:45:52Z",
+      "labels": [],
+      "url": "https://github.com/munch-group/geneinfo/issues/1"
+    },
+    {
+      "number": 4,
+      "title": "Make test to see if a gene set is less evenly distributed across the genome than a background set",
+      "state": "open",
+      "date": "2024-03-05T07:41:07Z",
+      "labels": [],
+      "url": "https://github.com/munch-group/geneinfo/issues/4"
+    },
+    {
+      "number": 3,
+      "title": "Have a nice weekend",
+      "state": "open",
+      "date": "2024-01-19T09:20:15Z",
+      "labels": [],
+      "url": "https://github.com/munch-group/geneinfo/issues/3"
     }
   ],
   "_ghDigest": {

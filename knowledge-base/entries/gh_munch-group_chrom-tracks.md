@@ -1,0 +1,1 @@
+Notebook widget for panning and zooming across chromosome tracks provided as pandas data frames

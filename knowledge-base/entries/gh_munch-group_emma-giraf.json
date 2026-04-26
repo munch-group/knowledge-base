@@ -5,7 +5,7 @@
   "tags": [],
   "genes": [],
   "source": "https://github.com/munch-group/emma-giraf",
-  "date": "2026-04-14T07:10:17Z",
+  "date": "2026-04-25T18:23:47Z",
   "synced": false,
   "connection": false,
   "_ghFullName": "munch-group/emma-giraf",
@@ -17,54 +17,54 @@
   "_sortTag": "",
   "_ghCommits": [
     {
-      "sha": "16a6d83",
+      "sha": "00ba71a",
       "msg": "Opdateret",
-      "date": "2026-04-22T10:41:16Z"
+      "date": "2026-04-25T18:20:40Z"
     },
     {
-      "sha": "d009aeb",
+      "sha": "9938190",
       "msg": "Opdateret",
-      "date": "2026-04-22T10:14:49Z"
+      "date": "2026-04-25T18:16:29Z"
     },
     {
-      "sha": "06ec327",
+      "sha": "cdda95c",
       "msg": "Opdateret",
-      "date": "2026-04-22T10:09:36Z"
+      "date": "2026-04-24T16:40:23Z"
     },
     {
-      "sha": "5589297",
+      "sha": "0e01346",
       "msg": "Opdateret",
-      "date": "2026-04-22T09:40:55Z"
+      "date": "2026-04-24T16:35:04Z"
     },
     {
-      "sha": "56b3e48",
+      "sha": "aaa0e94",
       "msg": "Opdateret",
-      "date": "2026-04-22T08:14:24Z"
+      "date": "2026-04-24T16:25:18Z"
     },
     {
-      "sha": "eb195df",
+      "sha": "a667626",
       "msg": "Opdateret",
-      "date": "2026-04-21T13:21:03Z"
+      "date": "2026-04-24T15:08:40Z"
     },
     {
-      "sha": "11170f1",
+      "sha": "839d925",
       "msg": "Opdateret",
-      "date": "2026-04-21T13:04:12Z"
+      "date": "2026-04-24T14:59:51Z"
     },
     {
-      "sha": "7788af1",
+      "sha": "589e589",
       "msg": "Opdateret",
-      "date": "2026-04-20T14:45:29Z"
+      "date": "2026-04-24T14:49:59Z"
     },
     {
-      "sha": "982076d",
+      "sha": "0237bc5",
       "msg": "Opdateret",
-      "date": "2026-04-20T14:38:13Z"
+      "date": "2026-04-24T14:31:50Z"
     },
     {
-      "sha": "c3f2cf4",
+      "sha": "b8dc3d0",
       "msg": "Opdateret",
-      "date": "2026-04-20T14:01:28Z"
+      "date": "2026-04-24T14:11:33Z"
     }
   ],
   "_ghIssuesRecent": [],

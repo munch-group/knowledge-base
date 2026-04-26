@@ -1,0 +1,41 @@
+{
+  "id": "gh_munch-group_atlas-variant-ages",
+  "type": "github",
+  "title": "atlas-variant-ages",
+  "tags": [],
+  "genes": [],
+  "source": "https://github.com/munch-group/atlas-variant-ages",
+  "date": "2026-04-24T10:30:57Z",
+  "synced": false,
+  "connection": false,
+  "_ghFullName": "munch-group/atlas-variant-ages",
+  "_ghStars": 0,
+  "_ghForks": 0,
+  "_ghLang": "Python",
+  "_ghOpenIssues": 0,
+  "_ghPrivate": false,
+  "_sortTag": "",
+  "_ghCommits": [
+    {
+      "sha": "085f34f",
+      "msg": "Update README and scripts for parquet file generation; enhance logging and update pd-lfs dependency",
+      "date": "2026-04-24T10:30:43Z"
+    },
+    {
+      "sha": "fb92e97",
+      "msg": "Update pd-lfs dependency and enhance logging in data processing scripts",
+      "date": "2026-04-24T09:45:08Z"
+    },
+    {
+      "sha": "8db76ee",
+      "msg": "added files",
+      "date": "2026-04-24T07:28:46Z"
+    },
+    {
+      "sha": "4627eb2",
+      "msg": "Initial commit",
+      "date": "2026-04-23T21:46:46Z"
+    }
+  ],
+  "_ghIssuesRecent": []
+}

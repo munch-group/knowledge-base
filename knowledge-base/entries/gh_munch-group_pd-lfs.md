@@ -1,0 +1,1 @@
+Our template for a python library
