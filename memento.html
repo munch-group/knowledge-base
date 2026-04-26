@@ -283,7 +283,7 @@ a { color: inherit; }
         <span class="page-title" id="page-title">All entries</span>
         <div class="header-actions">
           <button class="btn btn-sm" id="btn-reload" onclick="loadFromFile()" title="Reload from disk">↺ Reload</button>
-          <button class="btn btn-sm" id="btn-sync-all" onclick="syncAll()" title="Copy full sync prompt to clipboard — paste in any Claude chat">↗ Sync all</button>
+          <button class="btn btn-sm" id="btn-sync-all" onclick="syncAll()" title="Copy currently visible cards to clipboard">↗ Export</button>
           <button class="btn btn-sm" onclick="cleanupMemory()" title="Copy cleanup prompt — removes deleted entries from Claude memory">✕ Cleanup</button>
           <button class="btn btn-sm btn-primary" id="btn-add-toggle" onclick="toggleForm()">+ Add</button>
         </div>
@@ -337,9 +337,9 @@ a { color: inherit; }
         <button class="btn btn-sm" onclick="document.getElementById('search-input').value='';renderList()">Clear</button>
       </div>
       <div class="highlight-bar" id="highlight-bar">
-        <div class="highlight-toggle" onclick="toggleHighlightInput()"><span class="highlight-dot"></span> Highlight genes</div>
-        <div class="digest-toggle active" id="digest-toggle" onclick="toggleDigest()"><span class="digest-dot"></span> Where am I</div>
+        <div class="digest-toggle active" id="digest-toggle" onclick="toggleDigest()"><span class="digest-dot"></span> Dashboard</div>
         <div class="preview-toggle half" id="preview-toggle" onclick="togglePreviews()"><span class="preview-dot"></span> Card previews</div>
+        <div class="highlight-toggle" onclick="toggleHighlightInput()"><span class="highlight-dot"></span> Highlight genes</div>
         <div class="highlight-input-wrap" id="highlight-input-wrap" style="display:none">
           <input type="text" id="highlight-input" placeholder="MAPT HDAC6 or @MAPT,HDAC6" oninput="updateHighlightSet()" />
           <button class="btn btn-sm" onclick="document.getElementById('highlight-input').value='';updateHighlightSet()">Clear</button>
@@ -648,8 +648,9 @@ function syncItem(e, id) {
 
 // --- Clipboard sync: all entries (full replace) ---
 function syncAll() {
-  if (items.length === 0) { showToast('No entries to sync'); return; }
-  const parts = items.map(item => {
+  const { vis } = getVisibleItems();
+  if (vis.length === 0) { showToast('No visible cards to export'); return; }
+  const parts = vis.map(item => {
     const typePrefix = item.connection ? 'Connection · ' : '';
     const typeName = TYPES.find(t=>t.key===item.type)?.label || item.type;
     const title = item.title ? ` — ${item.title}` : '';
@@ -659,13 +660,10 @@ function syncAll() {
     const cleanContent = stripImageMd(item.content);
     return `[${typePrefix}${typeName}${title}] (id: ${item.id})\n${cleanContent}${genes}${tags}${source}`;
   });
-  const ids = items.map(i => i.id);
-  const prompt = `Please perform a FULL REPLACE of all knowledge base entries in your memory. The complete and authoritative set of entries is listed below. For each entry, if it already exists in your memory (by id), replace it entirely. If it is new, add it. IMPORTANT: any knowledge base entry currently in your memory whose id is NOT in this list has been deleted — please remove it from your memory.\n\nCurrent entry ids: ${ids.join(', ')}\n\n---\n\n${parts.join('\n\n---\n\n')}`;
-  navigator.clipboard.writeText(prompt).then(() => {
-    items.forEach(i => i.synced = true);
-    saveToFile();
-    renderList();
-    showToast('Full sync prompt copied — paste in any Claude chat');
+  const preamble = `The entries below are knowledge-base entries from my personal knowledge base. Please treat them as authoritative context about my work, projects, and notes, and use them to inform your responses. Each entry has a type, optional title, id, content, and optional genes/tags/source.`;
+  const text = `${preamble}\n\n---\n\n${parts.join('\n\n---\n\n')}`;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`Exported ${vis.length} card${vis.length === 1 ? '' : 's'} to clipboard`);
   }).catch(() => {
     showToast('Clipboard blocked — could not copy');
   });
@@ -845,22 +843,8 @@ function setTagFilter(tag) { activeTag = activeTag===tag ? null : tag; activeTyp
 function cycleTagSort() { tagSort = tagSort==='name' ? 'count' : tagSort==='count' ? 'date' : 'name'; renderFilters(); }
 
 // --- List & Cards ---
-function renderList() {
-  // Issues sub-view: render temporary issue cards instead of normal items
-  if (ghIssuesRepo && ghIssuesItems.length >= 0) {
-    return renderIssuesList();
-  }
-  // Digest focus: show single repo card
-  if (digestFocusCardId) {
-    const list = document.getElementById('item-list');
-    if (!list) return;
-    const item = items.find(i => i.id === digestFocusCardId);
-    if (!item) { digestFocusCardId = null; }
-    else { list.innerHTML = `<div class="item-col">${renderCard(item)}</div>`; resolveImages(); return; }
-  }
+function getVisibleItems() {
   const raw=(document.getElementById('search-input')?.value||'').trim();
-  // Parse search: comma with at least one flanking space = OR between groups.
-  // Within each group: @gene #tag free-text are AND. @g1,g2 and #t1,t2 (no spaces) = within-token OR.
   const allGeneNames = [...new Set(items.flatMap(i=>(i.genes||[]).map(g=>g.toUpperCase())))];
   const allTagNames = [...new Set(items.flatMap(i=>(i.tags||[]).map(t=>t.toLowerCase())))];
   function resolveGene(prefix) {
@@ -901,10 +885,8 @@ function renderList() {
     if (g.q && !(i.content.toLowerCase().includes(g.q)||(i.title||'').toLowerCase().includes(g.q)||(i.tags||[]).some(t=>t.toLowerCase().includes(g.q))||(i.genes||[]).some(gn=>gn.toLowerCase().includes(g.q))||(i.source||'').toLowerCase().includes(g.q))) return false;
     return true;
   }
-  // Split on comma with at least one flanking space
   const orGroups = raw ? raw.split(/\s*,\s+|\s+,\s*/).map(s=>s.trim()).filter(Boolean).map(parseGroup) : [];
   let vis=sortItems(items);
-  // Archive filter: show only archived when filter active, hide archived otherwise
   if(archiveFilter==='archived') vis=vis.filter(i=>i.archived);
   else vis=vis.filter(i=>!i.archived);
   if(activeType!=='all') vis=vis.filter(i=>i.type===activeType);
@@ -913,6 +895,23 @@ function renderList() {
   if(activeTag) vis=vis.filter(i=>(i.tags||[]).includes(activeTag));
   if(activeGene) vis=vis.filter(i=>(i.genes||[]).some(g=>g.toUpperCase()===activeGene.toUpperCase()));
   if(orGroups.length) vis=vis.filter(i=>orGroups.some(g=>matchesGroup(i,g)));
+  return { vis, orGroups };
+}
+
+function renderList() {
+  // Issues sub-view: render temporary issue cards instead of normal items
+  if (ghIssuesRepo && ghIssuesItems.length >= 0) {
+    return renderIssuesList();
+  }
+  // Digest focus: show single repo card
+  if (digestFocusCardId) {
+    const list = document.getElementById('item-list');
+    if (!list) return;
+    const item = items.find(i => i.id === digestFocusCardId);
+    if (!item) { digestFocusCardId = null; }
+    else { list.innerHTML = `<div class="item-col">${renderCard(item)}</div>`; resolveImages(); return; }
+  }
+  const { vis } = getVisibleItems();
   const list=document.getElementById('item-list');
   if(!list)return;
   if(vis.length===0){
@@ -921,7 +920,7 @@ function renderList() {
       const d = window._kbDigest;
       let digestHtml;
       if (!d || !d.markdown) { digestHtml = '<div class="digest-card"><p style="color:var(--text3)">No digest yet — run <code>pixi run digest</code></p></div>'; }
-      else { const dateStr = d.date ? fmtDateAgo(d.date) : ''; digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + '</div>' : ''}<h2>Where am I</h2>${linkifyDigestRepos(md(d.markdown))}</div>`; }
+      else { const dateStr = d.date ? fmtDateAgo(d.date) : ''; digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + '</div>' : ''}<h2>Dashboard</h2>${linkifyDigestRepos(md(d.markdown))}</div>`; }
       const pCard = items.find(i => i.id === '_priorities');
       const pH = pCard ? renderPrioritiesCard(pCard) : '<div class="digest-card priorities-card" style="border-style:dashed;color:var(--text3);text-align:center;cursor:pointer" onclick="createPrioritiesCard()"><p>Click to create a priorities card</p></div>';
       const ew = list.offsetWidth || Math.max(450, window.innerWidth - 260 - 48);
@@ -975,7 +974,7 @@ function renderList() {
       digestHtml = '<div class="digest-card"><p style="color:var(--text3)">No digest yet — run <code>pixi run digest</code></p></div>';
     } else {
       const dateStr = d.date ? fmtDate(d.date) : '';
-      digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + '</div>' : ''}<h2>Where am I</h2>${linkifyDigestRepos(md(d.markdown))}</div>`;
+      digestHtml = `<div class="digest-card">${dateStr ? '<div class="digest-date">Generated ' + esc(dateStr) + '</div>' : ''}<h2>Dashboard</h2>${linkifyDigestRepos(md(d.markdown))}</div>`;
     }
     if (digestStacked) {
       // Stack digest + inbox + priorities above the card columns
@@ -2044,7 +2043,7 @@ function ghBuildStatusHtml(commits, issues, repoName) {
     }
     h += '</ul>';
   } else {
-    h += '<ul><li style="color:var(--muted)">None</li></ul>';
+    h += '<ul><li style="color:var(--text3)">None</li></ul>';
   }
   h += '<h2>Next up</h2>';
   const open = issues.filter(i => i.state === 'open').sort((a, b) => b.number - a.number);
