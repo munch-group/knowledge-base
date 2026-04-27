@@ -1,6 +1,0 @@
-- Test and document composable model building with discrete/epochs/joint/bffg
-- Test dynamic ordering in elimination
-- Thorough code review. Have an agent team review the whole project and make suggestions to go over manually
-- Review and expand test coverage
-- Read references to Mathref.
-- Two-epoch "PSMC" with BFFG.

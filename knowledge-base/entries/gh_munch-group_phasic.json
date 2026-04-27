@@ -21,6 +21,46 @@
   "due": "",
   "_ghCommits": [
     {
+      "sha": "f5c206c",
+      "msg": "update",
+      "date": "2026-04-27T08:05:52Z"
+    },
+    {
+      "sha": "8a7628f",
+      "msg": "Added exceptions catching malformed ipv input",
+      "date": "2026-04-27T08:05:04Z"
+    },
+    {
+      "sha": "04cd831",
+      "msg": "Added -e to make install-dev editable",
+      "date": "2026-04-27T08:04:19Z"
+    },
+    {
+      "sha": "40931b4",
+      "msg": "Updated tests",
+      "date": "2026-04-27T08:03:50Z"
+    },
+    {
+      "sha": "0c4faaa",
+      "msg": "Moved old test files and added scaffolding for new tests",
+      "date": "2026-04-27T07:13:43Z"
+    },
+    {
+      "sha": "a4747bd",
+      "msg": "Reorganized tests and started making new ones from scratch",
+      "date": "2026-04-26T19:23:37Z"
+    },
+    {
+      "sha": "c6877e0",
+      "msg": "Add review-kit for automated code reviews and apply suggestions",
+      "date": "2026-04-24T18:08:26Z"
+    },
+    {
+      "sha": "6a3d1c3",
+      "msg": "chore: instantiate coverage-kit for this repo",
+      "date": "2026-04-24T14:25:24Z"
+    },
+    {
       "sha": "d2a87b0",
       "msg": "Fixed navbar in mathref book",
       "date": "2026-04-18T09:17:07Z"
@@ -29,46 +69,6 @@
       "sha": "523970f",
       "msg": "docs update",
       "date": "2026-04-14T09:27:13Z"
-    },
-    {
-      "sha": "5fbdfbd",
-      "msg": "Added images for later inclusion in mathref",
-      "date": "2026-04-14T08:56:19Z"
-    },
-    {
-      "sha": "5edc82b",
-      "msg": "Added backmore lost notebooks",
-      "date": "2026-04-14T08:55:43Z"
-    },
-    {
-      "sha": "56e76fe",
-      "msg": "correct format on notebooks for webpage",
-      "date": "2026-04-13T19:16:44Z"
-    },
-    {
-      "sha": "5ac6238",
-      "msg": "updated docs and notebooks",
-      "date": "2026-04-13T17:19:18Z"
-    },
-    {
-      "sha": "e73104c",
-      "msg": "Added back the notebooks I accidentally deleted",
-      "date": "2026-04-13T13:00:11Z"
-    },
-    {
-      "sha": "6080b49",
-      "msg": "  Composable graph operations: discretize, laplace_transform, and add_epoch now return new graphs",
-      "date": "2026-04-13T12:58:16Z"
-    },
-    {
-      "sha": "b463126",
-      "msg": "updated docs",
-      "date": "2026-04-13T06:12:26Z"
-    },
-    {
-      "sha": "0991d1d",
-      "msg": "Plan to implement composable modeling operations: Introduce new `add_epoch` and updated `discretize` methods to enhance graph composition, ensuring automatic coefficient management and consistent state handling across operations.",
-      "date": "2026-04-12T18:33:48Z"
     }
   ],
   "_ghIssuesRecent": [
