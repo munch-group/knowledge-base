@@ -1367,7 +1367,7 @@ function cancelEdit() {
 }
 
 function buildTypePicker(){
-  document.getElementById('type-picker').innerHTML=TYPES.map(t=>
+  document.getElementById('type-picker').innerHTML=TYPES.filter(t=>t.key!=='github').map(t=>
     `<button class="type-opt${selectedType===t.key?' active':''}" data-type="${t.key}" onclick="selType('${t.key}')">${t.label}</button>`
   ).join('');
 }
