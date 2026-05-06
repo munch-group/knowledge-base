@@ -2,6 +2,9 @@
 - Email/admin back on track.  
 - Drive: VEP workflow.  
 - Ideogram plot with new data
+- Lundbeck Experiment funds
+- Funding overview
+- Plan trips
 
 ## Week work
 - Time Machine on office machine
