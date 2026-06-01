@@ -1,4 +1,5 @@
 
+
 Issue: When constructing a joint prob graph with epochs (or other slots), the slots (E.g., epoch) in the base graph indexer remain at their original index in the joint prob index. Fix StateIndexer so slots do not need to be at the end, but can be interspersed between property sets.
 
 use tree span as mutation rate weight
